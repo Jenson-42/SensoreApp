@@ -1,1 +1,1 @@
-# SensoreApp
+# SensoreApp - SE Group Project 
