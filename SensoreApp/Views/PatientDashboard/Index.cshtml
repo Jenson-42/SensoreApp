@@ -164,3 +164,83 @@
                     </form>
                 </div>
             </div>
+            <!-- Comment Box -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">Comment Box</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Display existing comments -->
+                    <div class="comments-list mb-3" style="max-height: 300px; overflow-y: auto;">
+                        @if (Model.Comments != null && Model.Comments.Any())
+                        {
+                            @foreach (var comment in Model.Comments)
+                            {
+                                <div class="comment-item mb-3 p-2 rounded @(comment.AuthorType == "Patient" ? "bg-light" : "bg-primary bg-opacity-10")">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <strong class="@(comment.AuthorType == "Patient" ? "text-primary" : "text-success")">
+                                            @comment.AuthorType:
+                                        </strong>
+                                        <small class="text-muted">@comment.CreatedAt.ToString("dd/MM HH:mm")</small>
+                                    </div>
+                                    <p class="mb-0 small">@comment.Text</p>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <p class="text-muted small">No comments yet. Start a conversation!</p>
+                        }
+                    </div>
+
+                    <!-- Add new comment form -->
+                    <form asp-action="AddComment" asp-controller="PatientDashboard" method="post">
+                        <div class="input-group">
+                            <input type="text" class="form-control" name="commentText"
+                                   placeholder="Type your comment..." required />
+                            <input type="hidden" name="frameId" value="@Model.CurrentFrameID" />
+                            <input type="hidden" name="userId" value="1" />
+                            <button class="btn btn-primary" type="submit">
+                                <i class="bi bi-send"></i>
+                            </button>
+                        </div>
+                        @Html.AntiForgeryToken()
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Message Display -->
+    @if (TempData["Message"] != null)
+    {
+        <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+            <div class="toast show" role="alert">
+                <div class="toast-header bg-success text-white">
+                    <strong class="me-auto">Success</strong>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+                </div>
+                <div class="toast-body">
+                    @TempData["Message"]
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        function updateThresholdDisplay(value) {
+            document.getElementById('thresholdValue').textContent = value;
+        }
+
+        // Auto-hide toast after 3 seconds
+        setTimeout(function() {
+            var toasts = document.querySelectorAll('.toast');
+            toasts.forEach(function(toast) {
+                var bsToast = new bootstrap.Toast(toast);
+                bsToast.hide();
+            });
+        }, 3000);
+    </script>
+}
