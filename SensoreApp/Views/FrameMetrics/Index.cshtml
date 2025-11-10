@@ -13,8 +13,8 @@
     </div>
 
     <!-- Frame Information Bar -->
-@if (Model != null)
-{
+    @if (Model != null)
+    {
         <div class="row mb-4">
             <div class="col-md-12">
                 <div class="alert alert-light border d-flex justify-content-between align-items-center" style="background-color: #f8f9fa;">
@@ -31,9 +31,9 @@
                 </div>
             </div>
         </div>
-}
-else
-{
+    }
+    else
+    {
         <div class="row mb-4">
             <div class="col-md-12">
                 <div class="alert alert-light border">
@@ -41,7 +41,8 @@ else
                 </div>
             </div>
         </div>
-}
+    }
+
     <div class="row">
         <!-- Left Side: Heatmap -->
         <div class="col-md-8">
@@ -67,6 +68,7 @@ else
                 </div>
             </div>
         </div>
+
         <!-- Right Side: Key Metrics -->
         <div class="col-md-4">
             <div class="card shadow-sm mb-3">
@@ -104,6 +106,7 @@ else
         </div>
     </div>
 </div>
+
 @section Scripts {
     <script>
         function exportToPDF() {

@@ -110,5 +110,6 @@ namespace SensoreApp.Controllers
 
             return RedirectToAction(nameof(Index));
         }
+
     }
 }
