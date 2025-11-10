@@ -100,3 +100,67 @@
                 </div>
             </div>
         </div>
+        <!-- Right Column: Alerts and Comments -->
+        <div class="col-lg-5">
+            <!-- Recent Alerts -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">Recent Alerts</h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.RecentAlerts != null && Model.RecentAlerts.Any())
+                    {
+                        @foreach (var alert in Model.RecentAlerts)
+                        {
+                            <div class="alert @(alert.Status.Contains("Normal") ? "alert-success" : "alert-danger") mb-2" role="alert">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        @if (alert.Status.Contains("Normal"))
+                                        {
+                                            <i class="bi bi-check-circle-fill me-2"></i>
+                                        }
+                                        else
+                                        {
+                                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                        }
+                                        <strong>@alert.Status</strong>
+                                    </div>
+                                    <small class="text-muted">@alert.Timestamp.ToString("HH:mm")</small>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <p class="text-muted">No recent alerts</p>
+                    }
+                </div>
+            </div>
+
+            <!-- Alert Threshold Slider -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">Alert Threshold</h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="UpdateThreshold" asp-controller="PatientDashboard" method="post">
+                        <div class="mb-3">
+                            <label for="thresholdSlider" class="form-label">
+                                Pressure Alert Level: <span id="thresholdValue">@Model.AlertThresholdPercent</span>%
+                            </label>
+                            <input type="range" class="form-range" id="thresholdSlider" name="thresholdValue"
+                                   min="1" max="100" value="@Model.AlertThresholdPercent"
+                                   oninput="updateThresholdDisplay(this.value)">
+                            <input type="hidden" name="userId" value="1" />
+                            <div class="d-flex justify-content-between">
+                                <small class="text-muted">1%</small>
+                                <small class="text-muted">100%</small>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-sm w-100">
+                            <i class="bi bi-save"></i> Save Threshold
+                        </button>
+                        @Html.AntiForgeryToken()
+                    </form>
+                </div>
+            </div>
