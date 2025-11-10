@@ -37,3 +37,66 @@
                     </div>
                 </div>
             </div>
+            <!-- Metrics Row -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card shadow-sm h-100" style="background-color: #e3f2fd; border-left: 4px solid #2196F3;">
+                        <div class="card-body">
+                            <h6 class="text-muted mb-2">Peak Pressure Index</h6>
+                            @if (Model.PeakPressureIndex.HasValue)
+                            {
+                                <h2 class="mb-0" style="color: #1976D2;">@Model.PeakPressureIndex.Value.ToString("F2")</h2>
+                                <small class="text-muted">PSI</small>
+                            }
+                            else
+                            {
+                                <p class="text-muted">No data</p>
+                            }
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card shadow-sm h-100" style="background-color: #e8f5e9; border-left: 4px solid #4CAF50;">
+                        <div class="card-body">
+                            <h6 class="text-muted mb-2">Contact Area %</h6>
+                            @if (Model.ContactAreaPercent.HasValue)
+                            {
+                                <h2 class="mb-0" style="color: #388E3C;">@Model.ContactAreaPercent.Value.ToString("F2")%</h2>
+                            }
+                            else
+                            {
+                                <p class="text-muted">No data</p>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Additional Metrics Row -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card shadow-sm h-100" style="background-color: #e0f7fa; border-left: 4px solid #00BCD4;">
+                        <div class="card-body">
+                            <h6 class="text-muted mb-2">COV (Pressure Variation)</h6>
+                            @if (Model.COV.HasValue)
+                            {
+                                <h2 class="mb-0" style="color: #0097A7;">@Model.COV.Value.ToString("F4")</h2>
+                            }
+                            else
+                            {
+                                <p class="text-muted">No data</p>
+                            }
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card shadow-sm h-100" style="background-color: #fff3e0; border-left: 4px solid #FF9800;">
+                        <div class="card-body">
+                            <h6 class="text-muted mb-2">Threshold</h6>
+                            <h2 class="mb-0" style="color: #F57C00;">@Model.AlertThresholdPercent%</h2>
+                            <small class="text-muted">Alert Level</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
