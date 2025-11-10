@@ -1,1 +1,44 @@
-﻿
+﻿@model SensoreApp.Models.FrameMetric
+
+@{
+    ViewData["Title"] = "Frame Metrics";
+}
+
+<div class="container mt-4">
+    <!-- Header Section -->
+    <div class="row mb-3">
+        <div class="col-md-12">
+            <h2>Full Heatmap View</h2>
+        </div>
+    </div>
+
+    <!-- Frame Information Bar -->
+@if (Model != null)
+{
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="alert alert-light border d-flex justify-content-between align-items-center" style="background-color: #f8f9fa;">
+                    <div>
+                        <span class="me-4"><strong>Frame ID:</strong> @Model.FrameID</span>
+                        <span class="me-4"><strong>Sensor Device ID:</strong> <span class="text-muted">N/A</span></span>
+                        <span class="me-4"><strong>Timestamp:</strong> @Model.ComputedAt.ToString("dd/MM/yyyy HH:mm:ss")</span>
+                    </div>
+                    <div>
+                        <button class="btn btn-sm btn-primary" onclick="exportToPDF()">
+                            <i class="bi bi-download"></i> Export Snapshot (PDF)
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+}
+else
+{
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="alert alert-light border">
+                    <span class="text-muted">No frame data available</span>
+                </div>
+            </div>
+        </div>
+}
