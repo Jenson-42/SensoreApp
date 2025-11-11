@@ -1,0 +1,235 @@
+﻿@{
+    ViewData["Title"] = "Report Builder";
+    var userType = ViewBag.UserType as string ?? "patient";
+    var currentUserId = ViewBag.CurrentUserId as int? ?? 1;
+    var patientList = ViewBag.PatientList as List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>;
+}
+
+<div class="container-fluid mt-4">
+    <div class="row">
+        <!-- Left Panel: Report Configuration -->
+        <div class="col-lg-5">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-file-earmark-bar-graph"></i> Report Builder
+                    </h4>
+                    <p class="mb-0 small">Generate and download patient pressure analysis reports.</p>
+                </div>
+                <div class="card-body">
+                    <form id="reportForm" asp-action="GeneratePreview" asp-controller="Reports" method="post">
+                        <input type="hidden" name="CurrentUserId" value="@currentUserId" />
+
+                        <!-- Patient Selection (Only for Clinicians) -->
+                        @if (userType.ToLower() == "clinician" && patientList != null)
+                        {
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">
+                                    <i class="bi bi-person"></i> Select Patient
+                                </label>
+                                <select class="form-select" name="SelectedPatientId" id="patientSelect" required>
+                                    <option value="">-- Choose Patient --</option>
+                                    @foreach (var patient in patientList)
+                                    {
+                                        <option value="@patient.Value">@patient.Text</option>
+                                    }
+                                </select>
+                            </div>
+                        }
+                        else
+                        {
+                            <input type="hidden" name="SelectedPatientId" value="@currentUserId" />
+                        }
+
+                        <!-- Date Range Selection -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">
+                                <i class="bi bi-calendar-range"></i> Select Date Range
+                            </label>
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <label for="dateFrom" class="form-label small">From:</label>
+                                    <input type="date" class="form-control" id="dateFrom" name="DateFrom" required />
+                                </div>
+                                <div class="col-6">
+                                    <label for="dateTo" class="form-label small">To:</label>
+                                    <input type="date" class="form-control" id="dateTo" name="DateTo" required />
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Comparison Date Range (Optional) -->
+                        <div class="mb-4">
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="enableComparison" onchange="toggleComparison()">
+                                <label class="form-check-label fw-bold" for="enableComparison">
+                                    <i class="bi bi-arrow-left-right"></i> Enable Comparison Period
+                                </label>
+                            </div>
+                            <div id="comparisonDateSection" style="display: none;">
+                                <div class="row g-2">
+                                    <div class="col-6">
+                                        <label for="comparisonDateFrom" class="form-label small">Compare From:</label>
+                                        <input type="date" class="form-control" id="comparisonDateFrom" name="ComparisonDateFrom" />
+                                    </div>
+                                    <div class="col-6">
+                                        <label for="comparisonDateTo" class="form-label small">Compare To:</label>
+                                        <input type="date" class="form-control" id="comparisonDateTo" name="ComparisonDateTo" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Metrics Selection -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">
+                                <i class="bi bi-graph-up"></i> Select Metrics to Include
+                            </label>
+                            <div class="border rounded p-3" style="background-color: #f8f9fa;">
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="metricPeakPressure" name="IncludePeakPressure" value="true" checked>
+                                    <label class="form-check-label" for="metricPeakPressure">
+                                        Peak Pressure
+                                    </label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="metricContactArea" name="IncludeContactArea" value="true" checked>
+                                    <label class="form-check-label" for="metricContactArea">
+                                        Contact Area %
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="metricCOV" name="IncludeCOV" value="true" checked>
+                                    <label class="form-check-label" for="metricCOV">
+                                        Coefficient of Variation
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Snapshot Selection -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">
+                                <i class="bi bi-images"></i> Snapshot Selection
+                            </label>
+                            <p class="text-muted small mb-2">Select specific time snapshots to include in the report</p>
+
+                            <div class="border rounded p-3" style="max-height: 250px; overflow-y: auto; background-color: #f8f9fa;">
+                                <!-- Sample snapshots - TODO: Load from database -->
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" id="snapshot1" name="SelectedFrameIds" value="1" checked>
+                                    <label class="form-check-label d-flex align-items-center" for="snapshot1">
+                                        <div class="me-3" style="width: 60px; height: 60px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 4px;"></div>
+                                        <div>
+                                            <strong>10:15 AM</strong><br>
+                                            <small class="text-muted">09/11/2024</small>
+                                        </div>
+                                    </label>
+                                </div>
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" id="snapshot2" name="SelectedFrameIds" value="2" checked>
+                                    <label class="form-check-label d-flex align-items-center" for="snapshot2">
+                                        <div class="me-3" style="width: 60px; height: 60px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); border-radius: 4px;"></div>
+                                        <div>
+                                            <strong>10:45 AM</strong><br>
+                                            <small class="text-muted">09/11/2024</small>
+                                        </div>
+                                    </label>
+                                </div>
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" id="snapshot3" name="SelectedFrameIds" value="3" checked>
+                                    <label class="form-check-label d-flex align-items-center" for="snapshot3">
+                                        <div class="me-3" style="width: 60px; height: 60px; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); border-radius: 4px;"></div>
+                                        <div>
+                                            <strong>11:00 AM</strong><br>
+                                            <small class="text-muted">09/11/2024</small>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Additional Options -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">
+                                <i class="bi bi-toggles"></i> Additional Options
+                            </label>
+                            <div class="form-check form-switch mb-2">
+                                <input class="form-check-input" type="checkbox" id="includeNotes" name="IncludeClinicianNotes" value="true" checked>
+                                <label class="form-check-label" for="includeNotes">
+                                    Include Clinician Notes
+                                </label>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="includeAlerts" name="IncludeAlertSummary" value="true" checked>
+                                <label class="form-check-label" for="includeAlerts">
+                                    Include Alert Summary
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Generate Button -->
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-file-earmark-pdf"></i> Generate PDF Report
+                            </button>
+                        </div>
+
+                        @Html.AntiForgeryToken()
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel: Report Preview -->
+        <div class="col-lg-7">
+            <div class="card shadow-sm">
+                <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-eye"></i> Report Preview
+                    </h5>
+                    <span class="badge bg-light text-dark">Page 1 of 5</span>
+                </div>
+                <div class="card-body" style="min-height: 600px; background-color: #f8f9fa;">
+                    <div class="text-center py-5">
+                        <i class="bi bi-file-earmark-text" style="font-size: 4rem; color: #6c757d;"></i>
+                        <h4 class="mt-3 text-muted">Report Preview</h4>
+                        <p class="text-muted">Fill in the report criteria and click "Generate PDF Report" to see a preview here.</p>
+                    </div>
+                </div>
+                <div class="card-footer text-center">
+                    <button class="btn btn-success" id="downloadBtn" disabled>
+                        <i class="bi bi-download"></i> Download PDF
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Toggle comparison date section
+        function toggleComparison() {
+            const checkbox = document.getElementById('enableComparison');
+            const section = document.getElementById('comparisonDateSection');
+            section.style.display = checkbox.checked ? 'block' : 'none';
+
+            // Clear comparison dates if unchecked
+            if (!checkbox.checked) {
+                document.getElementById('comparisonDateFrom').value = '';
+                document.getElementById('comparisonDateTo').value = '';
+            }
+        }
+
+        // Set default dates (last 7 days)
+        document.addEventListener('DOMContentLoaded', function() {
+            const today = new Date();
+            const lastWeek = new Date(today);
+            lastWeek.setDate(lastWeek.getDate() - 7);
+
+            document.getElementById('dateTo').valueAsDate = today;
+            document.getElementById('dateFrom').valueAsDate = lastWeek;
+        });
+    </script>
+}
