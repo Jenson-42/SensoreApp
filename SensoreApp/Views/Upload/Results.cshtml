@@ -1,0 +1,147 @@
+﻿@{
+    ViewData["Title"] = "Upload Results";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Success Header -->
+            <div class="text-center mb-4">
+                <i class="bi bi-check-circle-fill text-success" style="font-size: 4rem;"></i>
+                <h2 class="mt-3">Upload Complete!</h2>
+                <p class="text-muted">Your CSV file has been processed successfully</p>
+            </div>
+
+            <!-- Results Summary Card -->
+            <div class="card shadow-lg mb-4">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-clipboard-check"></i> Processing Summary
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <!-- File Information -->
+                    <div class="row mb-4">
+                        <div class="col-md-12">
+                            <h5 class="border-bottom pb-2">
+                                <i class="bi bi-file-earmark-text"></i> File Information
+                            </h5>
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td class="fw-bold" style="width: 200px;">File Name:</td>
+                                    <td>@ViewBag.FileName</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">File Size:</td>
+                                    <td>@ViewBag.FileSizeMB MB</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">Total Rows:</td>
+                                    <td>@ViewBag.TotalRows</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Processing Results -->
+                    <div class="row mb-4">
+                        <div class="col-md-12">
+                            <h5 class="border-bottom pb-2">
+                                <i class="bi bi-gear-fill"></i> Processing Results
+                            </h5>
+                            <div class="row text-center">
+                                <div class="col-md-4">
+                                    <div class="p-3 bg-primary bg-opacity-10 rounded">
+                                        <h2 class="text-primary mb-0">@ViewBag.EstimatedFrames</h2>
+                                        <small class="text-muted">Total Frames</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="p-3 bg-success bg-opacity-10 rounded">
+                                        <h2 class="text-success mb-0">@ViewBag.ProcessedFrames</h2>
+                                        <small class="text-muted">Processed Successfully</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="p-3 @(ViewBag.ErrorCount != null && ViewBag.ErrorCount > 0 ? "bg-danger" : "bg-secondary") bg-opacity-10 rounded">
+                                        <h2 class="@(ViewBag.ErrorCount != null && ViewBag.ErrorCount > 0 ? "text-danger" : "text-secondary") mb-0">
+                                            @(ViewBag.ErrorCount ?? 0)
+                                        </h2>
+                                        <small class="text-muted">Errors</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Errors (if any) -->
+                    @if (ViewBag.ErrorCount != null && ViewBag.ErrorCount > 0)
+                    {
+                        <div class="row mb-4">
+                            <div class="col-md-12">
+                                <div class="alert alert-warning">
+                                    <h6 class="alert-heading">
+                                        <i class="bi bi-exclamation-triangle"></i> Processing Errors:
+                                    </h6>
+                                    <p class="mb-0 small">@ViewBag.Errors</p>
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    <!-- What Was Calculated -->
+                    <div class="row">
+                        <div class="col-md-12">
+                            <h5 class="border-bottom pb-2">
+                                <i class="bi bi-calculator"></i> Metrics Calculated
+                            </h5>
+                            <p>For each frame, the following metrics were calculated and saved:</p>
+                            <ul>
+                                <li><strong>Peak Pressure Index:</strong> Highest pressure point (excluding regions < 10 pixels)</li>
+                                <li><strong>Contact Area %:</strong> Percentage of sensor mat in contact with surface</li>
+                                <li><strong>Coefficient of Variation (COV):</strong> Measure of pressure distribution variability</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="row g-2 mb-4">
+                <div class="col-md-4">
+                    <a href="@Url.Action("Index", "PatientDashboard")" class="btn btn-primary w-100">
+                        <i class="bi bi-house"></i> Go to Dashboard
+                    </a>
+                </div>
+                <div class="col-md-4">
+                    <a href="@Url.Action("Index", "FrameMetrics")" class="btn btn-info w-100">
+                        <i class="bi bi-graph-up"></i> View Metrics
+                    </a>
+                </div>
+                <div class="col-md-4">
+                    <a href="@Url.Action("Index", "Upload")" class="btn btn-outline-secondary w-100">
+                        <i class="bi bi-upload"></i> Upload Another File
+                    </a>
+                </div>
+            </div>
+
+            <!-- Success Tips -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="bi bi-lightbulb"></i> What's Next?
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <ul class="mb-0">
+                        <li class="mb-2">View the <strong>Dashboard</strong> to see real-time pressure metrics from your uploaded data</li>
+                        <li class="mb-2">Check <strong>Frame Metrics</strong> to analyze specific frames in detail</li>
+                        <li class="mb-2">Generate <strong>Reports</strong> to compare metrics over different time periods</li>
+                        <li>Upload more CSV files to build a comprehensive pressure analysis history</li>
+                    </ul>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
