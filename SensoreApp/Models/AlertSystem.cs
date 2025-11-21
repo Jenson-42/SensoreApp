@@ -2,7 +2,7 @@
 {
     public class AlertSystem
     {
-        public int AlertId { get; set; } // needed for the database 
+        public int AlertSystemId { get; set; } // needed for the database 
         public int PatientId { get; set; } // links to the patient table 
         public int FrameId { get; set; } // links to the sensor frame that cause the alert
         public string Status { get; set; } = "Active";
