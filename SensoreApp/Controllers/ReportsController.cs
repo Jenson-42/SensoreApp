@@ -18,36 +18,17 @@ namespace SensoreApp.Controllers
 
         // GET: Reports
         // Main report builder page
-        public async Task<IActionResult> Index(string userType = "patient", int? userId = null)
+        public async Task<IActionResult> Index(string userType = "patient", int? userId = null, DateTime? dateFrom = null, DateTime? dateTo = null)
         {
             // TODO: Replace with actual authentication
             // For now, using URL parameter: ?userType=patient or ?userType=clinician
-            // When authentication exists, get from: User.Claims or Session
 
             ViewBag.UserType = userType;
-            ViewBag.CurrentUserId = userId ?? 1; // Default to user 1 for testing
+            ViewBag.CurrentUserId = userId ?? 1;
 
             // If clinician, get list of assigned patients
             if (userType.ToLower() == "clinician")
             {
-                // TODO: Get only assigned patients when ClinicianPatientAssignment table exists
-                /*
-                var clinicianId = userId ?? 1;
-                var assignedPatients = await _context.Users
-                    .Join(_context.ClinicianPatientAssignments,
-                        user => user.UserID,
-                        assignment => assignment.PatientUserID,
-                        (user, assignment) => new { user, assignment })
-                    .Where(x => x.assignment.ClinicianUserID == clinicianId)
-                    .Select(x => new SelectListItem
-                    {
-                        Value = x.user.UserID.ToString(),
-                        Text = x.user.FirstName + " " + x.user.LastName
-                    })
-                    .ToListAsync();
-                ViewBag.PatientList = assignedPatients;
-                */
-
                 // Sample patient list for testing
                 ViewBag.PatientList = new List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>
                 {
@@ -56,6 +37,62 @@ namespace SensoreApp.Controllers
                     new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem { Value = "3", Text = "Robert Johnson" }
                 };
             }
+
+            // Load available snapshots based on date range
+            if (!dateFrom.HasValue)
+            {
+                // Default: last 30 days to ensure we capture uploaded data
+                dateFrom = DateTime.Now.AddDays(-30);
+            }
+            if (!dateTo.HasValue)
+            {
+                // Default: tomorrow (to include today's data)
+                dateTo = DateTime.Now.AddDays(1);
+            }
+
+            // Get frames within date range
+            var allFrames = await _context.FrameMetrics
+                .Where(m => m.ComputedAt >= dateFrom && m.ComputedAt <= dateTo)
+                .OrderBy(m => m.ComputedAt)
+                .ToListAsync();
+
+            // Smart sampling: Limit to maximum 20 frames, evenly distributed
+            int maxFrames = 20;
+            var sampledFrames = new List<dynamic>();
+
+            if (allFrames.Count <= maxFrames)
+            {
+                // Show all frames if 20 or fewer
+                sampledFrames = allFrames.Select(m => new
+                {
+                    m.FrameID,
+                    m.FrameMetricID,
+                    m.ComputedAt
+                }).Cast<dynamic>().ToList();
+            }
+            else
+            {
+                // Sample evenly across the time period
+                int interval = allFrames.Count / maxFrames;
+
+                for (int i = 0; i < allFrames.Count; i += interval)
+                {
+                    if (sampledFrames.Count >= maxFrames) break;
+
+                    var frame = allFrames[i];
+                    sampledFrames.Add(new
+                    {
+                        frame.FrameID,
+                        frame.FrameMetricID,
+                        frame.ComputedAt
+                    });
+                }
+            }
+
+            ViewBag.AvailableFrames = sampledFrames;
+            ViewBag.TotalFramesInRange = allFrames.Count;
+            ViewBag.DateFrom = dateFrom;
+            ViewBag.DateTo = dateTo;
 
             return View();
         }
@@ -87,18 +124,18 @@ namespace SensoreApp.Controllers
             _context.Reports.Add(report);
             await _context.SaveChangesAsync();
 
-            // Save selected metrics
+            // Save selected metrics with comparison data
             if (request.IncludePeakPressure)
             {
-                await AddReportMetric(report.ReportID, "Peak Pressure", request.DateFrom, request.DateTo);
+                await AddReportMetric(report.ReportID, "Peak Pressure", request.DateFrom, request.DateTo, request.ComparisonDateFrom, request.ComparisonDateTo);
             }
             if (request.IncludeContactArea)
             {
-                await AddReportMetric(report.ReportID, "Contact Area %", request.DateFrom, request.DateTo);
+                await AddReportMetric(report.ReportID, "Contact Area %", request.DateFrom, request.DateTo, request.ComparisonDateFrom, request.ComparisonDateTo);
             }
             if (request.IncludeCOV)
             {
-                await AddReportMetric(report.ReportID, "Coefficient of Variation", request.DateFrom, request.DateTo);
+                await AddReportMetric(report.ReportID, "Coefficient of Variation", request.DateFrom, request.DateTo, request.ComparisonDateFrom, request.ComparisonDateTo);
             }
 
             // Save selected frames
@@ -190,32 +227,53 @@ namespace SensoreApp.Controllers
         }
 
         // Helper method to add metric calculations
-        private async Task AddReportMetric(int reportId, string metricName, DateTime dateFrom, DateTime dateTo)
+        private async Task AddReportMetric(int reportId, string metricName, DateTime dateFrom, DateTime dateTo, DateTime? comparisonDateFrom = null, DateTime? comparisonDateTo = null)
         {
-            // TODO: Calculate actual metrics from FrameMetrics table
-            /*
-            var avgValue = await _context.FrameMetrics
+            // Calculate REAL metric value from FrameMetrics table for main period
+            var mainPeriodFrames = await _context.FrameMetrics
                 .Where(fm => fm.ComputedAt >= dateFrom && fm.ComputedAt <= dateTo)
-                .AverageAsync(fm => metricName == "Peak Pressure" ? fm.PeakPressureIndex :
-                                    metricName == "Contact Area %" ? fm.ContactAreaPercent :
-                                    fm.COV);
-            */
+                .ToListAsync();
 
-            // Sample data for now
-            var sampleValue = metricName switch
+            decimal metricValue = 0m;
+
+            if (mainPeriodFrames.Any())
             {
-                "Peak Pressure" => 185.50m,
-                "Contact Area %" => 67.30m,
-                "Coefficient of Variation" => 0.2456m,
-                _ => 0m
-            };
+                metricValue = metricName switch
+                {
+                    "Peak Pressure" => (decimal)mainPeriodFrames.Average(fm => fm.PeakPressureIndex),
+                    "Contact Area %" => (decimal)mainPeriodFrames.Average(fm => fm.ContactAreaPercent),
+                    "Coefficient of Variation" => (decimal)mainPeriodFrames.Average(fm => fm.COV),
+                    _ => 0m
+                };
+            }
+
+            // Calculate comparison value if comparison period provided
+            decimal? comparisonValue = null;
+
+            if (comparisonDateFrom.HasValue && comparisonDateTo.HasValue)
+            {
+                var comparisonFrames = await _context.FrameMetrics
+                    .Where(fm => fm.ComputedAt >= comparisonDateFrom && fm.ComputedAt <= comparisonDateTo)
+                    .ToListAsync();
+
+                if (comparisonFrames.Any())
+                {
+                    comparisonValue = metricName switch
+                    {
+                        "Peak Pressure" => (decimal)comparisonFrames.Average(fm => fm.PeakPressureIndex),
+                        "Contact Area %" => (decimal)comparisonFrames.Average(fm => fm.ContactAreaPercent),
+                        "Coefficient of Variation" => (decimal)comparisonFrames.Average(fm => fm.COV),
+                        _ => 0m
+                    };
+                }
+            }
 
             var reportMetric = new ReportMetric
             {
                 ReportID = reportId,
                 MetricName = metricName,
-                MetricValue = sampleValue,
-                ComparisonValue = sampleValue * 0.95m // 5% lower for comparison (sample)
+                MetricValue = metricValue,
+                ComparisonValue = comparisonValue
             };
 
             _context.ReportMetrics.Add(reportMetric);

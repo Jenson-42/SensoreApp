@@ -101,7 +101,12 @@
                                 <div class="card h-100" style="background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);">
                                     <div class="card-body">
                                         <h6 class="card-subtitle mb-2 text-muted">@metric.MetricName</h6>
-                                        <h3 class="card-title text-primary mb-1">@metric.CurrentValue.ToString("F2")</h3>
+
+                                        <!-- Main Period Value -->
+                                        <div class="mb-2">
+                                            <small class="text-muted d-block">Current Period</small>
+                                            <h3 class="card-title text-primary mb-0">@metric.CurrentValue.ToString("F2")</h3>
+                                        </div>
 
                                         @if (metric.ComparisonValue.HasValue)
                                         {
@@ -111,14 +116,30 @@
                                             : 0;
                                             var isIncrease = change > 0;
 
-                                            <div class="mt-2">
-                                                <small class="text-muted">Comparison: @metric.ComparisonValue.Value.ToString("F2")</small>
-                                                <br>
-                                                <span class="badge @(isIncrease ? "bg-danger" : "bg-success") mt-1">
-                                                    <i class="bi bi-arrow-@(isIncrease ? "up" : "down")"></i>
-                                                    @Math.Abs(changePercent).ToString("F1")% @(isIncrease ? "increase" : "decrease")
-                                                </span>
+                                            <!-- Comparison Period Value -->
+                                            <div class="mt-2 pt-2 border-top">
+                                                <small class="text-muted d-block">Comparison Period</small>
+                                                <h5 class="text-secondary mb-2">@metric.ComparisonValue.Value.ToString("F2")</h5>
+
+                                                <!-- Change Badge -->
+                                                @if (Math.Abs(changePercent) > 0.01m)
+                                                {
+                                                    <span class="badge @(isIncrease ? "bg-danger" : "bg-success")">
+                                                        <i class="bi bi-arrow-@(isIncrease ? "up" : "down")"></i>
+                                                        @Math.Abs(changePercent).ToString("F1")% @(isIncrease ? "increase" : "decrease")
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-secondary">
+                                                        <i class="bi bi-dash"></i> No change
+                                                    </span>
+                                                }
                                             </div>
+                                        }
+                                        else
+                                        {
+                                            <small class="text-muted fst-italic">No comparison data</small>
                                         }
                                     </div>
                                 </div>

@@ -56,14 +56,26 @@
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     <label for="dateFrom" class="form-label">From:</label>
-                                    <input type="date" class="form-control form-control-lg" id="dateFrom" name="DateFrom" required />
+                                    <input type="date" class="form-control form-control-lg" id="dateFrom" name="DateFrom"
+                                           value="@ViewBag.DateFrom?.ToString("yyyy-MM-dd")" required />
                                 </div>
                                 <div class="col-md-6">
                                     <label for="dateTo" class="form-label">To:</label>
-                                    <input type="date" class="form-control form-control-lg" id="dateTo" name="DateTo" required />
+                                    <input type="date" class="form-control form-control-lg" id="dateTo" name="DateTo"
+                                           value="@ViewBag.DateTo?.ToString("yyyy-MM-dd")" required />
                                 </div>
                             </div>
+                            <div class="text-center mt-3">
+                                <button type="button" class="btn btn-info" onclick="refreshSnapshots()">
+                                    <i class="bi bi-arrow-clockwise"></i> Refresh Snapshots
+                                </button>
+                                <small class="d-block text-muted mt-2">
+                                    <i class="bi bi-info-circle"></i> Click to update available snapshots after changing dates
+                                </small>
+                            </div>
                         </div>
+
+                        <hr class="my-4">
 
                         <!-- Comparison Date Range (Optional) -->
                         <div class="mb-4">
@@ -127,41 +139,46 @@
                             <label class="form-label fw-bold">
                                 <i class="bi bi-images"></i> Snapshot Selection
                             </label>
-                            <p class="text-muted small mb-2">Select specific time snapshots to include in the report</p>
+                            <p class="text-muted small mb-2">
+                                Select specific time snapshots to include in the report
+                                @if (ViewBag.TotalFramesInRange != null && ViewBag.TotalFramesInRange > 20)
+                                {
+                                    <br>
+                                
+                                    <span class="badge bg-info mt-1">Showing 20 representative frames (sampled from @ViewBag.TotalFramesInRange total)</span>
+                                }
+                            </p>
 
-                            <div class="border rounded p-3" style="max-height: 300px; overflow-y: auto; background-color: #f8f9fa;">
-                                <!-- Sample snapshots - TODO: Load from database -->
-                                <div class="form-check mb-3 p-2 bg-white rounded">
-                                    <input class="form-check-input" type="checkbox" id="snapshot1" name="SelectedFrameIds" value="1" checked>
-                                    <label class="form-check-label d-flex align-items-center" for="snapshot1">
-                                        <div class="me-3" style="width: 60px; height: 60px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 4px;"></div>
-                                        <div>
-                                            <strong>10:15 AM</strong><br>
-                                            <small class="text-muted">09/11/2024</small>
+                            @if (ViewBag.AvailableFrames != null && ((IEnumerable<dynamic>)ViewBag.AvailableFrames).Any())
+                            {
+                                <div class="border rounded p-3" style="max-height: 300px; overflow-y: auto; background-color: #f8f9fa;">
+                                    @foreach (var frame in (IEnumerable<dynamic>)ViewBag.AvailableFrames)
+                                    {
+                                        <div class="form-check mb-3 p-2 bg-white rounded">
+                                            <input class="form-check-input" type="checkbox"
+                                                   id="snapshot@(frame.FrameID)"
+                                                   name="SelectedFrameIds"
+                                                   value="@frame.FrameID"
+                                                   checked>
+                                            <label class="form-check-label d-flex align-items-center" for="snapshot@(frame.FrameID)">
+                                                <div class="me-3" style="width: 60px; height: 60px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 4px;"></div>
+                                                <div>
+                                                    <strong>@frame.ComputedAt.ToString("HH:mm:ss")</strong><br>
+                                                    <small class="text-muted">@frame.ComputedAt.ToString("dd/MM/yyyy")</small><br>
+                                                    <small class="text-muted">Frame ID: @frame.FrameID</small>
+                                                </div>
+                                            </label>
                                         </div>
-                                    </label>
+                                    }
                                 </div>
-                                <div class="form-check mb-3 p-2 bg-white rounded">
-                                    <input class="form-check-input" type="checkbox" id="snapshot2" name="SelectedFrameIds" value="2" checked>
-                                    <label class="form-check-label d-flex align-items-center" for="snapshot2">
-                                        <div class="me-3" style="width: 60px; height: 60px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); border-radius: 4px;"></div>
-                                        <div>
-                                            <strong>10:45 AM</strong><br>
-                                            <small class="text-muted">09/11/2024</small>
-                                        </div>
-                                    </label>
+                            }
+                            else
+                            {
+                                <div class="alert alert-warning">
+                                    <i class="bi bi-exclamation-triangle"></i> No frames found for the selected date range.
+                                    <br><small>Try adjusting the date range or upload CSV data first.</small>
                                 </div>
-                                <div class="form-check mb-3 p-2 bg-white rounded">
-                                    <input class="form-check-input" type="checkbox" id="snapshot3" name="SelectedFrameIds" value="3" checked>
-                                    <label class="form-check-label d-flex align-items-center" for="snapshot3">
-                                        <div class="me-3" style="width: 60px; height: 60px; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); border-radius: 4px;"></div>
-                                        <div>
-                                            <strong>11:00 AM</strong><br>
-                                            <small class="text-muted">09/11/2024</small>
-                                        </div>
-                                    </label>
-                                </div>
-                            </div>
+                            }
                         </div>
 
                         <hr class="my-4">
@@ -222,14 +239,19 @@
             }
         }
 
-        // Set default dates (last 7 days)
-        document.addEventListener('DOMContentLoaded', function() {
-            const today = new Date();
-            const lastWeek = new Date(today);
-            lastWeek.setDate(lastWeek.getDate() - 7);
+        // Refresh snapshots based on date range
+        function refreshSnapshots() {
+            const dateFrom = document.getElementById('dateFrom').value;
+            const dateTo = document.getElementById('dateTo').value;
+            const userType = '@ViewBag.UserType';
 
-            document.getElementById('dateTo').valueAsDate = today;
-            document.getElementById('dateFrom').valueAsDate = lastWeek;
-        });
+            if (!dateFrom || !dateTo) {
+                alert('Please select both From and To dates');
+                return;
+            }
+
+            // Reload page with date parameters
+            window.location.href = `/Reports?userType=${userType}&dateFrom=${dateFrom}&dateTo=${dateTo}`;
+        }
     </script>
 }

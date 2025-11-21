@@ -19,23 +19,27 @@ namespace SensoreApp.Controllers
         // Shows the main Frame Metrics page
         public async Task<IActionResult> Index(int? frameId)
         {
-            // If no frameId provided, get the most recent frame
-            if (frameId == null)
+            FrameMetric? metrics = null;
+
+            // If frameId provided, get that specific frame
+            if (frameId.HasValue)
             {
-                // TODO: Once SensorFrames is created by teammate, get latest frame
-                // For now, just show empty view
-                return View();
+                metrics = await _context.FrameMetrics
+                    .Where(m => m.FrameID == frameId.Value)
+                    .FirstOrDefaultAsync();
+            }
+            else
+            {
+                // No frameId - get the most recent frame
+                metrics = await _context.FrameMetrics
+                    .OrderByDescending(m => m.ComputedAt)
+                    .FirstOrDefaultAsync();
             }
 
-            // Get metrics for the specific frame
-            var metrics = await _context.FrameMetrics
-                .Where(m => m.FrameID == frameId)
-                .FirstOrDefaultAsync();
-
+            // If still no metrics found, show empty view with message
             if (metrics == null)
             {
-                // No metrics calculated for this frame yet
-                ViewBag.Message = "No metrics available for this frame.";
+                ViewBag.Message = "No frame data available. Please upload a CSV file first.";
                 return View();
             }
 
@@ -43,13 +47,9 @@ namespace SensoreApp.Controllers
         }
 
         // GET: FrameMetrics/Calculate/5
-        // Calculates metrics for a specific frame
+        // Calculates metrics for a specific frame (not used with CSV upload, but kept for compatibility)
         public async Task<IActionResult> Calculate(int frameId)
         {
-            // TODO: Get the actual frame data from SensorFrames table
-            // TODO: Calculate Peak Pressure Index, Contact Area %, COV
-            // For now, this is a placeholder
-
             // Check if metrics already exist for this frame
             var existingMetrics = await _context.FrameMetrics
                 .FirstOrDefaultAsync(m => m.FrameID == frameId);
@@ -60,20 +60,11 @@ namespace SensoreApp.Controllers
                 return RedirectToAction(nameof(Index), new { frameId = frameId });
             }
 
-            // Create new metrics (placeholder values for now)
-            var newMetrics = new FrameMetric
-            {
-                FrameID = frameId,
-                PeakPressureIndex = 0, // TODO: Calculate from frame data
-                ContactAreaPercent = 0, // TODO: Calculate from frame data
-                COV = 0, // TODO: Calculate from frame data
-                ComputedAt = DateTime.Now
-            };
+            // Note: In production, this would get frame data from SensorFrames table
+            // and calculate metrics. For now, metrics are calculated during CSV upload.
 
-            _context.FrameMetrics.Add(newMetrics);
-            await _context.SaveChangesAsync();
-
-            return RedirectToAction(nameof(Index), new { frameId = frameId });
+            TempData["Message"] = "Metrics are calculated automatically during CSV upload.";
+            return RedirectToAction(nameof(Index));
         }
 
         // GET: FrameMetrics/Details/5
@@ -110,6 +101,5 @@ namespace SensoreApp.Controllers
 
             return RedirectToAction(nameof(Index));
         }
-
     }
 }

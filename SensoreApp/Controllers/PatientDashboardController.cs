@@ -26,61 +26,34 @@ namespace SensoreApp.Controllers
             var viewModel = new PatientDashboardViewModel
             {
                 PatientName = "John Doe", // TODO: Get from Users table when teammate creates it
-                LastUploadTime = DateTime.Now.AddMinutes(-15), // TODO: Get from latest SensorFrame
+                LastUploadTime = DateTime.Now.AddMinutes(-15),
                 AlertThresholdPercent = 80 // Default threshold
             };
 
-            // Get the most recent frame for this user
-            // TODO: Uncomment when teammate creates SensorFrames table
-            /*
-            var latestFrame = await _context.SensorFrames
-                .Where(f => f.UserID == currentUserId && !f.IsArchived)
-                .OrderByDescending(f => f.Timestamp)
+            // Get the most recent frame metrics from database
+            var latestMetrics = await _context.FrameMetrics
+                .OrderByDescending(m => m.ComputedAt)
                 .FirstOrDefaultAsync();
 
-            if (latestFrame != null)
+            if (latestMetrics != null)
             {
-                viewModel.CurrentFrameID = latestFrame.FrameID;
-                viewModel.HeatmapData = latestFrame.FrameData;
-                viewModel.LastUploadTime = latestFrame.Timestamp;
-
-                // Get metrics for this frame
-                var metrics = await _context.FrameMetrics
-                    .Where(m => m.FrameID == latestFrame.FrameID)
-                    .FirstOrDefaultAsync();
-
-                if (metrics != null)
-                {
-                    viewModel.PeakPressureIndex = metrics.PeakPressureIndex;
-                    viewModel.ContactAreaPercent = metrics.ContactAreaPercent;
-                    viewModel.COV = metrics.COV;
-                }
+                // Use REAL data from database
+                viewModel.CurrentFrameID = latestMetrics.FrameID;
+                viewModel.PeakPressureIndex = latestMetrics.PeakPressureIndex;
+                viewModel.ContactAreaPercent = latestMetrics.ContactAreaPercent;
+                viewModel.COV = latestMetrics.COV;
+                viewModel.LastUploadTime = latestMetrics.ComputedAt;
             }
-            */
+            else
+            {
+                // No data yet - use placeholder values
+                viewModel.CurrentFrameID = 0;
+                viewModel.PeakPressureIndex = 0;
+                viewModel.ContactAreaPercent = 0;
+                viewModel.COV = 0;
+            }
 
-            // For now, use sample data for display
-            viewModel.CurrentFrameID = 1;
-            viewModel.PeakPressureIndex = 187.43;
-            viewModel.ContactAreaPercent = 65.50;
-            viewModel.COV = 0.2347;
-
-            // Get recent alerts
-            // TODO: Uncomment when teammate creates Alerts table
-            /*
-            viewModel.RecentAlerts = await _context.Alerts
-                .Where(a => a.UserID == currentUserId)
-                .OrderByDescending(a => a.StartTime)
-                .Take(3)
-                .Select(a => new AlertInfo
-                {
-                    AlertID = a.AlertID,
-                    Status = a.Status,
-                    Timestamp = a.StartTime
-                })
-                .ToListAsync();
-            */
-
-            // Sample alerts for now
+            // Sample alerts (TODO: replace with real Alerts table data when teammate creates it)
             viewModel.RecentAlerts = new List<AlertInfo>
             {
                 new AlertInfo
@@ -97,24 +70,7 @@ namespace SensoreApp.Controllers
                 }
             };
 
-            // Get recent comments
-            // TODO: Uncomment when teammate creates Comments table
-            /*
-            viewModel.Comments = await _context.Comments
-                .Where(c => c.FrameID == viewModel.CurrentFrameID)
-                .OrderByDescending(c => c.CreatedAt)
-                .Select(c => new CommentInfo
-                {
-                    CommentID = c.CommentID,
-                    AuthorName = c.Author.FirstName + " " + c.Author.LastName,
-                    AuthorType = c.Author.UserType,
-                    Text = c.Text,
-                    CreatedAt = c.CreatedAt
-                })
-                .ToListAsync();
-            */
-
-            // Sample comments for now
+            // Sample comments (TODO: replace with real Comments table data when teammate creates it)
             viewModel.Comments = new List<CommentInfo>
             {
                 new CommentInfo
