@@ -16,6 +16,9 @@ builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
 
+// Configure Rotativa for PDF generation
+Rotativa.AspNetCore.RotativaConfiguration.Setup(app.Environment.WebRootPath, "Rotativa");
+
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {

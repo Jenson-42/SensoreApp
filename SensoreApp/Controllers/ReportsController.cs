@@ -2,8 +2,12 @@
 using Microsoft.EntityFrameworkCore;
 using SensoreApp.Data;
 using SensoreApp.Models;
+using Rotativa.AspNetCore;
+using System.Globalization;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using System;
-using System.Text;
 
 namespace SensoreApp.Controllers
 {
@@ -199,12 +203,55 @@ namespace SensoreApp.Controllers
             // Get frame data
             // TODO: Load actual frame data and heatmaps when SensorFrames exists
             viewModel.FrameCount = report.ReportFrame?.Count ?? 0;
+            // Get chart data from selected frames
+            if (report.ReportFrame != null && report.ReportFrame.Any())
+            {
+                var frameIds = report.ReportFrame.Select(rf => rf.FrameID).ToList();
+
+                var frameMetrics = await _context.FrameMetrics
+                    .Where(fm => frameIds.Contains(fm.FrameID))
+                    .OrderBy(fm => fm.ComputedAt)
+                    .ToListAsync();
+
+                foreach (var frame in frameMetrics)
+                {
+                    viewModel.ChartLabels.Add(frame.ComputedAt.ToString("HH:mm"));
+                    viewModel.PeakPressureData.Add((decimal)frame.PeakPressureIndex);
+                    viewModel.ContactAreaData.Add((decimal)frame.ContactAreaPercent);
+                    viewModel.COVData.Add((decimal)frame.COV);
+                }
+            }
+            
+            viewModel.PeakPressureData = viewModel.PeakPressureData
+                .Select(x => decimal.Parse(x.ToString(CultureInfo.InvariantCulture)))
+                .ToList();
+
+            viewModel.ContactAreaData = viewModel.ContactAreaData
+                .Select(x => decimal.Parse(x.ToString(CultureInfo.InvariantCulture)))
+                .ToList();
+
+            viewModel.COVData = viewModel.COVData
+                .Select(x => decimal.Parse(x.ToString(CultureInfo.InvariantCulture)))
+                .ToList();
+            
+
+            // Generate chart URL
+            if (viewModel.ChartLabels.Any()) 
+            {
+                viewModel.ChartImageUrl = GenerateChartImageUrl(
+                    viewModel.ChartLabels,
+                    viewModel.PeakPressureData,
+                    viewModel.ContactAreaData,
+                    viewModel.COVData
+                );
+            }
+
 
             return View(viewModel);
         }
 
         // GET: Reports/DownloadPDF/5
-        // Downloads the report as PDF
+        // Downloads the report as PDF using Rotativa
         public async Task<IActionResult> DownloadPDF(int id)
         {
             var report = await _context.Reports
@@ -217,13 +264,80 @@ namespace SensoreApp.Controllers
                 return NotFound();
             }
 
-            // TODO: Implement actual PDF generation library (e.g., iTextSharp, SelectPdf, or Rotativa)
-            // For now, create a simple text-based "PDF" as placeholder
+            // Build preview view model (same as Preview action)
+            var viewModel = new ReportPreviewViewModel
+            {
+                ReportID = report.ReportID,
+                PatientName = "John Doe", // TODO: Get from Users table
+                DateFrom = report.DateFrom,
+                DateTo = report.DateTo,
+                ComparisonDateFrom = report.ComparisonDateFrom,
+                ComparisonDateTo = report.ComparisonDateTo,
+                GeneratedAt = report.GeneratedAt,
+                ReportType = report.ReportType,
+                Metrics = new List<ReportMetricDisplay>()
 
-            var pdfContent = GeneratePdfContent(report);
-            var bytes = Encoding.UTF8.GetBytes(pdfContent);
+            };
 
-            return File(bytes, "application/pdf", $"Report_{report.ReportID}_{DateTime.Now:yyyyMMdd}.pdf");
+            // Get metric data
+            foreach (var metric in report.ReportMetric)
+            {
+                viewModel.Metrics.Add(new ReportMetricDisplay
+                {
+                    MetricName = metric.MetricName,
+                    CurrentValue = metric.MetricValue,
+                    ComparisonValue = metric.ComparisonValue
+                });
+            }
+
+            viewModel.FrameCount = report.ReportFrame?.Count ?? 0;
+            if (report.ReportFrame != null && report.ReportFrame.Any())
+            {
+                var frameIds = report.ReportFrame.Select(rf => rf.FrameID).ToList();
+
+                var frameMetrics = await _context.FrameMetrics
+                    .Where(fm => frameIds.Contains(fm.FrameID))
+                    .OrderBy(fm => fm.ComputedAt)
+                    .ToListAsync();
+
+                foreach (var frame in frameMetrics)
+                {
+                    viewModel.ChartLabels.Add(frame.ComputedAt.ToString("HH:mm"));
+                    viewModel.PeakPressureData.Add((decimal)frame.PeakPressureIndex);
+                    viewModel.ContactAreaData.Add((decimal)frame.ContactAreaPercent);
+                    viewModel.COVData.Add((decimal)frame.COV);
+                }
+            }
+            
+            viewModel.PeakPressureData = viewModel.PeakPressureData
+                .Select(x => decimal.Parse(x.ToString(CultureInfo.InvariantCulture)))
+                .ToList();
+
+            viewModel.ContactAreaData = viewModel.ContactAreaData
+                .Select(x => decimal.Parse(x.ToString(CultureInfo.InvariantCulture)))
+                .ToList();
+
+            viewModel.COVData = viewModel.COVData
+                .Select(x => decimal.Parse(x.ToString(CultureInfo.InvariantCulture)))
+                .ToList();
+          
+            // Generate chart URL
+            if (viewModel.ChartLabels.Any())
+            {
+                viewModel.ChartImageUrl = GenerateChartImageUrl(
+                    viewModel.ChartLabels,
+                    viewModel.PeakPressureData,
+                    viewModel.ContactAreaData,
+                    viewModel.COVData
+                );
+            }
+
+
+            // Generate PDF from PreviewPDF view
+            return new ViewAsPdf("PreviewPDF", viewModel)
+            {
+                FileName = $"SensoreReport_{report.ReportID}_{DateTime.Now:yyyyMMdd}.pdf"
+            };
         }
 
         // Helper method to add metric calculations
@@ -280,35 +394,90 @@ namespace SensoreApp.Controllers
             await _context.SaveChangesAsync();
         }
 
-        // Helper method to generate PDF content (placeholder)
-        private string GeneratePdfContent(Report report)
+
+
+        // Generate chart image URL using QuickChart.io
+        private string GenerateChartImageUrl(
+            List<string> labels,
+            List<decimal> peakData,
+            List<decimal> contactData,
+            List<decimal> covData)
         {
-            var sb = new StringBuilder();
-            sb.AppendLine("=== SENSORE PRESSURE ANALYSIS REPORT ===");
-            sb.AppendLine();
-            sb.AppendLine($"Report ID: {report.ReportID}");
-            sb.AppendLine($"Generated: {report.GeneratedAt:dd/MM/yyyy HH:mm:ss}");
-            sb.AppendLine($"Period: {report.DateFrom:dd/MM/yyyy} to {report.DateTo:dd/MM/yyyy}");
-            sb.AppendLine();
-            sb.AppendLine("=== METRICS ===");
-
-            foreach (var metric in report.ReportMetric)
+            var chartConfig = new
             {
-                sb.AppendLine($"{metric.MetricName}: {metric.MetricValue:F2}");
-                if (metric.ComparisonValue.HasValue)
+                type = "line",
+                data = new
                 {
-                    sb.AppendLine($"  Comparison: {metric.ComparisonValue.Value:F2}");
+                    labels = labels,
+                    datasets = new object[]
+                    {
+                new
+                {
+                    label = "Peak Pressure",
+                    data = peakData,
+                    borderColor = "rgb(33, 118, 210)",
+                    backgroundColor = "rgba(33, 118, 210, 0.1)",
+                    fill = false
+                },
+                new
+                {
+                    label = "Contact Area %",
+                    data = contactData,
+                    borderColor = "rgb(56, 142, 60)",
+                    backgroundColor = "rgba(56, 142, 60, 0.1)",
+                    fill = false
+                },
+                new
+                {
+                    label = "COV",
+                    data = covData,
+                    borderColor = "rgb(0, 151, 167)",
+                    backgroundColor = "rgba(0, 151, 167, 0.1)",
+                    fill = false,
+                    yAxisID = "y-axis-1"
                 }
-            }
+                    }
+                },
+                options = new
+                {
+                    // Chart.js v2 style scales for QuickChart (yAxes array)
+                    scales = new
+                    {
+                        yAxes = new[]
+                        {
+                    new {
+                        id = "y-axis-0",
+                        type = "linear",
+                        position = "left",
+                        gridLines = new { drawOnChartArea = true } // included so anonymous types match
+                    },
+                    new {
+                        id = "y-axis-1",
+                        type = "linear",
+                        position = "right",
+                        gridLines = new { drawOnChartArea = false }
+                    }
+                }
+                    },
+                  
+                    legend = new { position = "top" }
+                }
+            };
 
-            sb.AppendLine();
-            sb.AppendLine($"Total Frames Analyzed: {report.ReportFrame?.Count ?? 0}");
-            sb.AppendLine();
-            sb.AppendLine("Note: This is a placeholder PDF. Actual PDF generation will be implemented.");
+            // Serialize with relaxed escaping to avoid strange escaping issues
+            var json = System.Text.Json.JsonSerializer.Serialize(chartConfig,
+                new System.Text.Json.JsonSerializerOptions
+                {
+                    Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+                });
 
-            return sb.ToString();
+
+            var encodedChart = Uri.EscapeDataString(json);
+            return $"https://quickchart.io/chart?c={encodedChart}&width=800&height=400";
         }
+
     }
+
 
     // Helper classes for report generation
     public class ReportGenerationRequest
@@ -339,6 +508,14 @@ namespace SensoreApp.Controllers
         public string ReportType { get; set; } = string.Empty;
         public List<ReportMetricDisplay> Metrics { get; set; } = new();
         public int FrameCount { get; set; }
+
+        // Chart data properties
+        public List<string> ChartLabels { get; set; } = new();
+        public List<decimal> PeakPressureData { get; set; } = new();
+        public List<decimal> ContactAreaData { get; set; } = new();
+        public List<decimal> COVData { get; set; } = new();
+        public string ChartImageUrl { get; set; } = string.Empty;
+
     }
 
     public class ReportMetricDisplay
@@ -347,4 +524,5 @@ namespace SensoreApp.Controllers
         public decimal CurrentValue { get; set; }
         public decimal? ComparisonValue { get; set; }
     }
+
 }

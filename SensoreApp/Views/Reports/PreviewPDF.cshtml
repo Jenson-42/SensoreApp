@@ -1,0 +1,254 @@
+﻿@model SensoreApp.Controllers.ReportPreviewViewModel
+
+@{
+    Layout = "_LayoutPDF";
+    ViewData["Title"] = "Report";
+}
+
+
+<div class="container-fluid mt-4">
+    <!-- Report Preview Card (PDF version - no header, no buttons) -->
+    <div class="card shadow-lg">
+        <div class="card-body p-5" style="background-color: #ffffff;">
+
+            <!-- Report Header -->
+            <div class="text-center mb-5">
+                <img src="@(Url.Content("~/images/Sensore-Logo.png"))" alt="Sensore Logo" class="mb-3" style="height:50px;">
+                <h3 class="text-primary">Pressure Analysis Report</h3>
+                <p class="text-muted mb-0">Continuous Pressure Monitoring System</p>
+            </div>
+
+            <hr class="my-4">
+
+            <!-- Report Information -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <h5 class="text-secondary mb-3">Report Information</h5>
+                    <table class="table table-sm table-borderless">
+                        <tr>
+                            <td class="fw-bold" style="width: 150px;">Report ID:</td>
+                            <td>@Model.ReportID</td>
+                        </tr>
+                        <tr>
+                            <td class="fw-bold">Patient:</td>
+                            <td>@Model.PatientName</td>
+                        </tr>
+                        <tr>
+                            <td class="fw-bold">Generated:</td>
+                            <td>@Model.GeneratedAt.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                        </tr>
+                        <tr>
+                            <td class="fw-bold">Report Type:</td>
+                            <td>
+                                <span class="badge @(Model.ReportType == "Comparison" ? "bg-info" : "bg-primary")">
+                                    @Model.ReportType
+                                </span>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <h5 class="text-secondary mb-3">Analysis Period</h5>
+                    <table class="table table-sm table-borderless">
+                        <tr>
+                            <td class="fw-bold" style="width: 150px;">Main Period:</td>
+                            <td>@Model.DateFrom.ToString("dd/MM/yyyy") - @Model.DateTo.ToString("dd/MM/yyyy")</td>
+                        </tr>
+                        @if (Model.ComparisonDateFrom.HasValue && Model.ComparisonDateTo.HasValue)
+                        {
+                            <tr>
+                                <td class="fw-bold">Comparison Period:</td>
+                                <td>@Model.ComparisonDateFrom.Value.ToString("dd/MM/yyyy") - @Model.ComparisonDateTo.Value.ToString("dd/MM/yyyy")</td>
+                            </tr>
+                        }
+                        <tr>
+                            <td class="fw-bold">Frames Analyzed:</td>
+                            <td>@Model.FrameCount snapshots</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <hr class="my-4">
+
+            <!-- Key Metrics Summary -->
+            <div class="mb-4">
+                <h5 class="text-secondary mb-3">
+                    <i class="bi bi-graph-up"></i> Key Metrics Summary
+                </h5>
+
+                @if (Model.Metrics != null && Model.Metrics.Any())
+                {
+                    <div class="row">
+                        @foreach (var metric in Model.Metrics)
+                        {
+                            <div class="col-md-4 mb-3">
+                                <div class="card h-100" style="background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);">
+                                    <div class="card-body">
+                                        <h6 class="card-subtitle mb-2 text-muted">@metric.MetricName</h6>
+
+                                        <div class="mb-2">
+                                            <small class="text-muted d-block">Current Period</small>
+                                            <h3 class="card-title text-primary mb-0">@metric.CurrentValue.ToString("F2")</h3>
+                                        </div>
+
+                                        @if (metric.ComparisonValue.HasValue)
+                                        {
+                                            var change = metric.CurrentValue - metric.ComparisonValue.Value;
+                                            var changePercent = metric.ComparisonValue.Value != 0
+                                            ? (change / metric.ComparisonValue.Value) * 100
+                                            : 0;
+                                            var isIncrease = change > 0;
+
+                                            <div class="mt-2 pt-2 border-top">
+                                                <small class="text-muted d-block">Comparison Period</small>
+                                                <h5 class="text-secondary mb-2">@metric.ComparisonValue.Value.ToString("F2")</h5>
+
+                                                @if (Math.Abs(changePercent) > 0.01m)
+                                                {
+                                                    <span class="badge @(isIncrease ? "bg-danger" : "bg-success")">
+                                                        <i class="bi bi-arrow-@(isIncrease ? "up" : "down")"></i>
+                                                        @Math.Abs(changePercent).ToString("F1")% @(isIncrease ? "increase" : "decrease")
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-secondary">
+                                                        <i class="bi bi-dash"></i> No change
+                                                    </span>
+                                                }
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <small class="text-muted fst-italic">No comparison data</small>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> No metrics data available for this report.
+                    </div>
+                }
+            </div>
+
+            <hr class="my-4">
+
+            <!-- Pressure Distribution Charts -->
+            <div class="mb-4" style="page-break-before: always;">
+                <h5 class="text-secondary mb-3">
+                    <i class="bi bi-bar-chart"></i> Pressure Distribution Over Time
+                </h5>
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                @if (!string.IsNullOrEmpty(Model.ChartImageUrl))
+                                {
+                                    <img src="@Model.ChartImageUrl" alt="Pressure Distribution Chart" style="max-width: 100%; height: auto;" />
+                                }
+                                else
+                                {
+                                    <p class="text-muted">No chart data available</p>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Selected Snapshots -->
+            <div class="mb-4">
+                <h5 class="text-secondary mb-3">
+                    <i class="bi bi-images"></i> Analyzed Snapshots (@Model.FrameCount frames)
+                </h5>
+                <div class="row">
+                    @for (int i = 1; i <= Math.Min(Model.FrameCount, 20); i++)
+                    {
+                        <div class="col-md-4 mb-3">
+                            <div class="card">
+                                <div class="card-body p-2">
+                                    <div style="width: 100%; height: 150px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 4px; margin-bottom: 8px;"></div>
+                                    <small class="text-muted">
+                                        <i class="bi bi-clock"></i> Frame @i - 10:@(i * 15) AM
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <hr class="my-4">
+
+            <!-- Clinical Notes Section -->
+            <div class="mb-4">
+                <h5 class="text-secondary mb-3">
+                    <i class="bi bi-journal-text"></i> Clinical Notes
+                </h5>
+                <div class="card">
+                    <div class="card-body">
+                        <p class="mb-2"><strong>Clinician:</strong> Dr. Sarah Smith</p>
+                        <p class="mb-2"><strong>Date:</strong> @DateTime.Now.ToString("dd/MM/yyyy")</p>
+                        <p class="text-muted mb-0">
+                            Patient showing consistent pressure patterns. Peak pressure levels remain within acceptable range.
+                            Recommend continued monitoring and position changes every 2 hours. No immediate intervention required.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <hr class="my-4">
+
+            <!-- Alert Summary -->
+            <div class="mb-4">
+                <h5 class="text-secondary mb-3">
+                    <i class="bi bi-exclamation-triangle"></i> Alert Summary
+                </h5>
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-md-4">
+                                <div class="p-3 bg-success bg-opacity-10 rounded">
+                                    <h2 class="text-success mb-0">12</h2>
+                                    <small class="text-muted">Normal Readings</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="p-3 bg-warning bg-opacity-10 rounded">
+                                    <h2 class="text-warning mb-0">3</h2>
+                                    <small class="text-muted">Warning Alerts</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="p-3 bg-danger bg-opacity-10 rounded">
+                                    <h2 class="text-danger mb-0">1</h2>
+                                    <small class="text-muted">Critical Alerts</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <p class="text-muted small mb-0">
+                                <i class="bi bi-info-circle"></i>
+                                Most recent alert: High pressure detected at 14:32 on @DateTime.Now.ToString("dd/MM/yyyy")
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Report Footer -->
+            <div class="text-center mt-5 pt-4 border-top">
+                <p class="text-muted small mb-1">This report was automatically generated by Sensore Pressure Monitoring System</p>
+                <p class="text-muted small mb-0">Report ID: @Model.ReportID | Generated: @Model.GeneratedAt.ToString("dd/MM/yyyy HH:mm:ss")</p>
+            </div>
+
+        </div>
+    </div>
+</div>
+

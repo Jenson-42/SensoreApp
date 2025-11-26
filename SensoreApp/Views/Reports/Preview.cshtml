@@ -28,7 +28,7 @@
 
             <!-- Report Header -->
             <div class="text-center mb-5">
-                <img src="https://via.placeholder.com/150x50?text=SENSORE" alt="Sensore Logo" class="mb-3">
+                <img src="@(Url.Content("~/images/Sensore-Logo.png"))" alt="Sensore Logo" class="mb-3" style="height:50px;">
                 <h3 class="text-primary">Pressure Analysis Report</h3>
                 <p class="text-muted mb-0">Continuous Pressure Monitoring System</p>
             </div>
@@ -165,15 +165,8 @@
                 <div class="row">
                     <div class="col-md-12">
                         <div class="card">
-                            <div class="card-body text-center py-5" style="background-color: #f8f9fa;">
-                                <!-- Placeholder for chart -->
-                                <div style="height: 250px; display: flex; align-items: center; justify-content: center;">
-                                    <div>
-                                        <i class="bi bi-graph-up" style="font-size: 3rem; color: #6c757d;"></i>
-                                        <p class="text-muted mt-3">Pressure trend chart will be displayed here</p>
-                                        <small class="text-muted">(Chart generation pending - can use Chart.js or similar)</small>
-                                    </div>
-                                </div>
+                            <div class="card-body">
+                                <canvas id="pressureChart" height="80"></canvas>
                             </div>
                         </div>
                     </div>
@@ -189,7 +182,7 @@
                 </h5>
                 <div class="row">
                     <!-- Sample snapshot cards - TODO: Load actual frame data -->
-                    @for (int i = 1; i <= Math.Min(Model.FrameCount, 6); i++)
+                    @for (int i = 1; i <= Math.Min(Model.FrameCount, 20); i++)
                     {
                         <div class="col-md-4 mb-3">
                             <div class="card">
@@ -273,14 +266,20 @@
     </div>
 
     <!-- Action Buttons (Bottom) -->
-    <div class="text-center my-4">
-        <a href="@Url.Action("Index", "Reports")" class="btn btn-outline-secondary btn-lg me-2">
-            <i class="bi bi-arrow-left"></i> Create New Report
-        </a>
-        <a href="@Url.Action("DownloadPDF", "Reports", new { id = Model.ReportID })" class="btn btn-success btn-lg">
-            <i class="bi bi-download"></i> Download as PDF
-        </a>
+    <div class="row g-2 mb-4 justify-content-center">
+        <div class="col-md-4">
+            <a href="@Url.Action("Index", "Reports")" class="btn btn-outline-secondary w-100">
+                <i class="bi bi-arrow-left"></i> Create New Report
+            </a>
+        </div>
+
+        <div class="col-md-4">
+            <a href="@Url.Action("DownloadPDF", "Reports", new { id = Model.ReportID })" class="btn btn-primary w-100">
+                <i class="bi bi-download"></i> Download as PDF
+            </a>
+        </div>
     </div>
+
 </div>
 
 @section Scripts {
@@ -289,5 +288,75 @@
         function printReport() {
             window.print();
         }
+    </script>
+    <!-- Chart.js Library -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script>
+        // Pressure Distribution Over Time Chart
+        document.addEventListener('DOMContentLoaded', function() {
+            const ctx = document.getElementById('pressureChart');
+
+            if (ctx) {
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: @Html.Raw(Json.Serialize(Model.ChartLabels ?? new List<string>())),
+                        datasets: [{
+                            label: 'Peak Pressure',
+                            data: @Html.Raw(Json.Serialize(Model.PeakPressureData ?? new List<decimal>())),
+                            borderColor: 'rgb(33, 118, 210)',
+                            backgroundColor: 'rgba(33, 118, 210, 0.1)',
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Contact Area %',
+                            data: @Html.Raw(Json.Serialize(Model.ContactAreaData ?? new List<decimal>())),
+                            borderColor: 'rgb(56, 142, 60)',
+                            backgroundColor: 'rgba(56, 142, 60, 0.1)',
+                            tension: 0.4
+                        },
+                        {
+                            label: 'COV',
+                            data: @Html.Raw(Json.Serialize(Model.COVData ?? new List<decimal>())),
+                            borderColor: 'rgb(0, 151, 167)',
+                            backgroundColor: 'rgba(0, 151, 167, 0.1)',
+                            tension: 0.4,
+                            yAxisID: 'y1'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        interaction: {
+                            mode: 'index',
+                            intersect: false,
+                        },
+                        scales: {
+                            y: {
+                                type: 'linear',
+                                display: true,
+                                position: 'left',
+                                title: {
+                                    display: true,
+                                    text: 'Peak Pressure / Contact Area %'
+                                }
+                            },
+                            y1: {
+                                type: 'linear',
+                                display: true,
+                                position: 'right',
+                                title: {
+                                    display: true,
+                                    text: 'COV'
+                                },
+                                grid: {
+                                    drawOnChartArea: false,
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        });
     </script>
 }
