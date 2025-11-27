@@ -95,6 +95,31 @@ namespace SensoreApp.Data
             {
                 entity.HasKey(e => e.ReportFrameID);
             });
+
+            // Configure User
+            modelBuilder.Entity<User>(entity =>
+            {
+                entity.HasKey(e => e.UserId);
+
+                entity.Property(e => e.FirstName)
+                    .IsRequired()
+                    .HasMaxLength(128);
+
+                entity.Property(e => e.LastName)
+                    .IsRequired()
+                    .HasMaxLength(128);
+
+                entity.Property(e => e.Email)
+                    .IsRequired()
+                    .HasMaxLength(128);
+
+                entity.Property(e => e.Phone)
+                    .IsRequired()
+                    .HasMaxLength(128);
+
+                entity.Property(e => e.IsActive)
+                    .IsRequired();
+            });
         }
     }
 }
