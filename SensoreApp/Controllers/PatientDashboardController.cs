@@ -8,6 +8,7 @@ namespace SensoreApp.Controllers
 {
     public class PatientDashboardController : Controller
     {
+        //Dependency injection of the database context
         private readonly AppDBContext _context;
 
         public PatientDashboardController(AppDBContext context)

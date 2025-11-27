@@ -86,20 +86,5 @@ namespace SensoreApp.Controllers
 
             return View(frameMetric);
         }
-
-        // POST: FrameMetrics/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
-        {
-            var frameMetric = await _context.FrameMetrics.FindAsync(id);
-            if (frameMetric != null)
-            {
-                _context.FrameMetrics.Remove(frameMetric);
-                await _context.SaveChangesAsync();
-            }
-
-            return RedirectToAction(nameof(Index));
-        }
     }
 }

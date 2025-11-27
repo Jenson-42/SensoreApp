@@ -19,7 +19,7 @@
         public List<AlertInfo>? RecentAlerts { get; set; }
 
         // Alert Threshold Setting
-        public int AlertThresholdPercent { get; set; } = 50;
+        public int AlertThresholdPercent { get; set; } = 80;
 
         // Comment Section Data
         public List<CommentInfo>? Comments { get; set; }

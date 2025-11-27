@@ -159,40 +159,5 @@ namespace SensoreApp.Controllers
 
             return View();
         }
-
-        // GET: Upload/TestData
-        // Generates sample test data for demonstration
-        public async Task<IActionResult> TestData()
-        {
-            try
-            {
-                // Generate 10 sample frames with different patterns
-                var patterns = new[] { "sitting", "concentrated", "even", "sitting", "concentrated" };
-                int framesCreated = 0;
-
-                foreach (var pattern in patterns)
-                {
-                    // Generate 2 frames per pattern = 10 total
-                    for (int i = 0; i < 2; i++)
-                    {
-                        var frameData = _metricsService.GenerateSampleFrameData(pattern);
-                        var metrics = _metricsService.CalculateMetrics(frameData, framesCreated + 1);
-
-                        _context.FrameMetrics.Add(metrics);
-                        framesCreated++;
-                    }
-                }
-
-                await _context.SaveChangesAsync();
-
-                TempData["Success"] = $"Successfully generated {framesCreated} test frames with calculated metrics!";
-                return RedirectToAction("Index", "PatientDashboard");
-            }
-            catch (Exception ex)
-            {
-                TempData["Error"] = $"Error generating test data: {ex.Message}";
-                return RedirectToAction(nameof(Index));
-            }
-        }
     }
 }
