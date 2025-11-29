@@ -12,8 +12,8 @@ using SensoreApp.Data;
 namespace SensoreApp.Migrations
 {
     [DbContext(typeof(AppDBContext))]
-    [Migration("20251121164457_AddAlertSystemTable")]
-    partial class AddAlertSystemTable
+    [Migration("20251129022639_CreateAlertsTable")]
+    partial class CreateAlertsTable
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -25,38 +25,46 @@ namespace SensoreApp.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("SensoreApp.Models.AlertSystem", b =>
+            modelBuilder.Entity("SensoreApp.Models.Alert", b =>
                 {
-                    b.Property<int>("AlertSystemId")
+                    b.Property<int>("AlertId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AlertSystemId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AlertId"));
+
+                    b.Property<DateTime?>("AcknowledgedAt")
+                        .HasColumnType("datetime2");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("FrameId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("PatientId")
-                        .HasColumnType("int");
+                    b.Property<DateTime?>("EndTime")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Reason")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("ReviewedBy")
-                        .HasColumnType("int");
-
-                    b.Property<int>("SeverityLevel")
-                        .HasColumnType("int");
+                    b.Property<DateTime>("StartTime")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.HasKey("AlertSystemId");
+                    b.Property<decimal>("ThresholdPct")
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<float>("TriggerValue")
+                        .HasColumnType("real");
+
+                    b.Property<int>("TriggeringFrameId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("AlertId");
 
                     b.ToTable("Alerts");
                 });
@@ -184,6 +192,42 @@ namespace SensoreApp.Migrations
                     b.HasIndex("ReportID");
 
                     b.ToTable("ReportMetrics");
+                });
+
+            modelBuilder.Entity("SensoreApp.Models.User", b =>
+                {
+                    b.Property<int>("UserId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("UserId"));
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("LastName")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<string>("Phone")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.HasKey("UserId");
+
+                    b.ToTable("User");
                 });
 
             modelBuilder.Entity("SensoreApp.Models.ReportFrame", b =>
