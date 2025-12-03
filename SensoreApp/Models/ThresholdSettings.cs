@@ -15,11 +15,7 @@ namespace SensoreApp.Models
         public decimal ThresholdValue { get; set; } // This is for threshold value which could be a percentage
 
         public DateTime CreatedAt { get; set; } = DateTime.Now; // Timestamp for when the threshold setting is first created
-       
-
-
-
-
+      
 
     }
 }

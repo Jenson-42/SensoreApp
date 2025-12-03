@@ -94,11 +94,22 @@
                 <div class="col-md-6">
                     <div class="card shadow-sm h-100" style="background-color: #fff3e0; border-left: 4px solid #FF9800;">
                         <div class="card-body">
-                            <h6 class="text-muted mb-2">Threshold</h6>
+                            <h6 class="text-muted mb-2">
+                                Threshold
+                                @if (Model.AlertThresholdPercent != 80)
+                                {
+                                    <span class="badge bg-primary ms-1">Custom</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary ms-1">Default</span>
+                                }
+                            </h6>
                             <h2 class="mb-0" style="color: #F57C00;">@Model.AlertThresholdPercent%</h2>
                             <small class="text-muted">Alert Level</small>
                         </div>
                     </div>
+
                 </div>
             </div>
         </div>
@@ -257,6 +268,22 @@
             </div>
         </div>
     }
+    <!-- Error Message Display -->
+    @if (TempData["Error"] != null)
+    {
+        <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+            <div class="toast show" role="alert">
+                <div class="toast-header bg-danger text-white">
+                    <strong class="me-auto">Error</strong>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+                </div>
+                <div class="toast-body">
+                    @TempData["Error"]
+                </div>
+            </div>
+        </div>
+    }
+
 </div>
 
 @section Scripts {

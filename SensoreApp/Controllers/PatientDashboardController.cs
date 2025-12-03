@@ -25,12 +25,17 @@ namespace SensoreApp.Controllers
             // Get real patient name from Users table
             var user = await _context.Users.FindAsync(currentUserId);
             string patientName = user != null ? $"{user.FirstName} {user.LastName}" : "Unknown User";
-
+            // Get user's saved threshold or use default
+            var thresholdSetting = await _context.ThresholdSettings
+            .Where(t => t.UserID == currentUserId)
+            .FirstOrDefaultAsync();
             var viewModel = new PatientDashboardViewModel
             {
                 PatientName = patientName,
                 LastUploadTime = DateTime.Now.AddMinutes(-15),
-                AlertThresholdPercent = 80 // Default threshold
+                AlertThresholdPercent = thresholdSetting != null
+                ? (int)thresholdSetting.ThresholdValue
+                : 80 // Default threshold if not set
             };
 
             // Get the most recent frame metrics from database
@@ -131,29 +136,37 @@ namespace SensoreApp.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdateThreshold(int userId, int thresholdValue)
         {
-            // TODO: Save threshold to user settings or ThresholdSettings table
-            /*
-            var settings = await _context.ThresholdSettings
-                .FirstOrDefaultAsync(s => s.UserID == userId);
-
-            if (settings == null)
+            try
             {
-                settings = new ThresholdSettings
+                // Check if user already has threshold settings
+                var settings = await _context.ThresholdSettings
+                    .FirstOrDefaultAsync(s => s.UserID == userId);
+
+                if (settings == null)
                 {
-                    UserID = userId,
-                    ThresholdValue = thresholdValue
-                };
-                _context.ThresholdSettings.Add(settings);
+                    // Create new threshold setting
+                    settings = new ThresholdSettings
+                    {
+                        UserID = userId,
+                        ThresholdValue = thresholdValue,
+                        CreatedAt = DateTime.Now
+                    };
+                    _context.ThresholdSettings.Add(settings);
+                }
+                else
+                {
+                    // Update existing threshold setting
+                    settings.ThresholdValue = thresholdValue;
+                }
+
+                await _context.SaveChangesAsync();
+                TempData["Message"] = $"Alert threshold updated to {thresholdValue}%";
             }
-            else
+            catch (Exception ex)
             {
-                settings.ThresholdValue = thresholdValue;
+                TempData["Error"] = $"Failed to update threshold: {ex.Message}";
             }
 
-            await _context.SaveChangesAsync();
-            */
-
-            TempData["Message"] = $"Alert threshold updated to {thresholdValue}%";
             return RedirectToAction(nameof(Index));
         }
     }

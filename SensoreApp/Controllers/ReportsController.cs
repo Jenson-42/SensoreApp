@@ -249,6 +249,38 @@ namespace SensoreApp.Controllers
                 );
             }
 
+            // Calculate REAL alert summary from Alerts table
+            var alertsInPeriod = await _context.Alerts
+                .Where(a => a.UserId == report.UserID &&
+                            a.CreatedAt >= report.DateFrom &&
+                            a.CreatedAt <= report.DateTo)
+                .ToListAsync();
+
+            // Count alerts by status/severity
+            // Assuming: Status "New" or "Active" = Warning/Critical based on TriggerValue
+            // Status "Resolved" or contains "Normal" = Normal
+            viewModel.NormalReadingsCount = alertsInPeriod.Count(a =>
+                a.Status.Contains("Normal", StringComparison.OrdinalIgnoreCase) ||
+                a.Status == "Resolved");
+
+            viewModel.WarningAlertsCount = alertsInPeriod.Count(a =>
+                (a.Status == "New" || a.Status == "Active") &&
+                a.TriggerValue < 600); // Warning threshold
+
+            viewModel.CriticalAlertsCount = alertsInPeriod.Count(a =>
+                (a.Status == "New" || a.Status == "Active") &&
+                a.TriggerValue >= 600); // Critical threshold
+
+            // Get most recent alert
+            var mostRecentAlert = alertsInPeriod
+                .OrderByDescending(a => a.CreatedAt)
+                .FirstOrDefault();
+
+            if (mostRecentAlert != null)
+            {
+                viewModel.MostRecentAlertTime = mostRecentAlert.CreatedAt;
+                viewModel.MostRecentAlertReason = mostRecentAlert.Reason ?? "High pressure detected";
+            }
 
             return View(viewModel);
         }
@@ -336,6 +368,34 @@ namespace SensoreApp.Controllers
                 );
             }
 
+            // Calculate REAL alert summary from Alerts table
+            var alertsInPeriod = await _context.Alerts
+                .Where(a => a.UserId == report.UserID &&
+                            a.CreatedAt >= report.DateFrom &&
+                            a.CreatedAt <= report.DateTo)
+                .ToListAsync();
+
+            viewModel.NormalReadingsCount = alertsInPeriod.Count(a =>
+                a.Status.Contains("Normal", StringComparison.OrdinalIgnoreCase) ||
+                a.Status == "Resolved");
+
+            viewModel.WarningAlertsCount = alertsInPeriod.Count(a =>
+                (a.Status == "New" || a.Status == "Active") &&
+                a.TriggerValue < 600);
+
+            viewModel.CriticalAlertsCount = alertsInPeriod.Count(a =>
+                (a.Status == "New" || a.Status == "Active") &&
+                a.TriggerValue >= 600);
+
+            var mostRecentAlert = alertsInPeriod
+                .OrderByDescending(a => a.CreatedAt)
+                .FirstOrDefault();
+
+            if (mostRecentAlert != null)
+            {
+                viewModel.MostRecentAlertTime = mostRecentAlert.CreatedAt;
+                viewModel.MostRecentAlertReason = mostRecentAlert.Reason ?? "High pressure detected";
+            }
 
             // Generate PDF from PreviewPDF view
             return new ViewAsPdf("PreviewPDF", viewModel)
@@ -519,6 +579,13 @@ namespace SensoreApp.Controllers
         public List<decimal> ContactAreaData { get; set; } = new();
         public List<decimal> COVData { get; set; } = new();
         public string ChartImageUrl { get; set; } = string.Empty;
+
+        // NEW: Alert Summary Properties
+        public int NormalReadingsCount { get; set; }
+        public int WarningAlertsCount { get; set; }
+        public int CriticalAlertsCount { get; set; }
+        public DateTime? MostRecentAlertTime { get; set; }
+        public string? MostRecentAlertReason { get; set; }
 
     }
 

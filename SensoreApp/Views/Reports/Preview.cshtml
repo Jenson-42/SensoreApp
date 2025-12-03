@@ -229,28 +229,38 @@
                         <div class="row text-center">
                             <div class="col-md-4">
                                 <div class="p-3 bg-success bg-opacity-10 rounded">
-                                    <h2 class="text-success mb-0">12</h2>
+                                    <h2 class="text-success mb-0">@Model.NormalReadingsCount</h2>
                                     <small class="text-muted">Normal Readings</small>
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="p-3 bg-warning bg-opacity-10 rounded">
-                                    <h2 class="text-warning mb-0">3</h2>
+                                    <h2 class="text-warning mb-0">@Model.WarningAlertsCount</h2>
                                     <small class="text-muted">Warning Alerts</small>
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="p-3 bg-danger bg-opacity-10 rounded">
-                                    <h2 class="text-danger mb-0">1</h2>
+                                    <h2 class="text-danger mb-0">@Model.CriticalAlertsCount</h2>
                                     <small class="text-muted">Critical Alerts</small>
                                 </div>
                             </div>
                         </div>
                         <div class="mt-3">
-                            <p class="text-muted small mb-0">
-                                <i class="bi bi-info-circle"></i>
-                                Most recent alert: High pressure detected at 14:32 on @DateTime.Now.ToString("dd/MM/yyyy")
-                            </p>
+                            @if (Model.MostRecentAlertTime.HasValue)
+                            {
+                                <p class="text-muted small mb-0">
+                                    <i class="bi bi-info-circle"></i>
+                                    Most recent alert: @Model.MostRecentAlertReason at @Model.MostRecentAlertTime.Value.ToString("HH:mm") on @Model.MostRecentAlertTime.Value.ToString("dd/MM/yyyy")
+                                </p>
+                            }
+                            else
+                            {
+                                <p class="text-muted small mb-0">
+                                    <i class="bi bi-info-circle"></i>
+                                    No alerts recorded during this period
+                                </p>
+                            }
                         </div>
                     </div>
                 </div>
