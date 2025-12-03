@@ -15,12 +15,11 @@ namespace SensoreApp.Data
         public DbSet<ReportMetric> ReportMetrics { get; set; }
         public DbSet<ReportFrame> ReportFrames { get; set; }
         public DbSet<Alert> Alerts { get; set; }
+        public DbSet<User> Users { get; set; }
 
         // Tables my teammates will add later (commented out for now)
-        // public DbSet<User> Users { get; set; }
         // public DbSet<SensorDevice> SensorDevices { get; set; }
         // public DbSet<SensorFrame> SensorFrames { get; set; }
-        // public DbSet<Alert> Alerts { get; set; }
         // public DbSet<Comment> Comments { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -95,6 +94,49 @@ namespace SensoreApp.Data
             {
                 entity.HasKey(e => e.ReportFrameID);
             });
+
+            // Configure Alert
+            modelBuilder.Entity<Alert>(entity =>
+            {
+                entity.HasKey(e => e.AlertId);
+
+                // Foreign key to User
+                entity.HasOne<User>()
+                    .WithMany()
+                    .HasForeignKey(e => e.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // TriggeringFrameId is a FK to FrameMetric (or SensorFrame later)
+                entity.Property(e => e.TriggeringFrameId)
+                    .IsRequired();
+
+                entity.Property(e => e.Reason)
+                    .HasMaxLength(500); // optional, limit text length
+
+                entity.Property(e => e.TriggerValue)
+                    .HasColumnType("real"); // maps float to SQL Server 'real'
+
+                entity.Property(e => e.ThresholdPct)
+                    .HasColumnType("decimal(5,2)");
+
+                entity.Property(e => e.StartTime)
+                    .IsRequired();
+
+                entity.Property(e => e.EndTime)
+                    .IsRequired(false);
+
+                entity.Property(e => e.Status)
+                    .IsRequired()
+                    .HasMaxLength(50)
+                    .HasDefaultValue("New");
+
+                entity.Property(e => e.AcknowledgedAt)
+                    .IsRequired(false);
+
+                entity.Property(e => e.CreatedAt)
+                    .HasDefaultValueSql("GETDATE()");
+            });
+
 
             // Configure User
             modelBuilder.Entity<User>(entity =>

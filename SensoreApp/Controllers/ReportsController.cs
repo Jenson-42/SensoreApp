@@ -33,13 +33,15 @@ namespace SensoreApp.Controllers
             // If clinician, get list of assigned patients
             if (userType.ToLower() == "clinician")
             {
-                // Sample patient list for testing
-                ViewBag.PatientList = new List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>
-                {
-                    new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem { Value = "1", Text = "John Doe" },
-                    new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem { Value = "2", Text = "Jane Smith" },
-                    new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem { Value = "3", Text = "Robert Johnson" }
-                };
+                // Get REAL list of patients from database
+                ViewBag.PatientList = await _context.Users
+                    .Where(u => u.IsActive) // Only active users
+                    .Select(u => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem
+                    {
+                        Value = u.UserId.ToString(),
+                        Text = $"{u.FirstName} {u.LastName}"
+                    })
+                    .ToListAsync();
             }
 
             // Load available snapshots based on date range
@@ -174,12 +176,13 @@ namespace SensoreApp.Controllers
             {
                 return NotFound();
             }
-
+            // Get real patient name first
+            var user = await _context.Users.FindAsync(report.UserID);
             // Build preview view model
             var viewModel = new ReportPreviewViewModel
             {
                 ReportID = report.ReportID,
-                PatientName = "John Doe", // TODO: Get from Users table
+                PatientName = user != null ? $"{user.FirstName} {user.LastName}" : "Unknown User",
                 DateFrom = report.DateFrom,
                 DateTo = report.DateTo,
                 ComparisonDateFrom = report.ComparisonDateFrom,
@@ -263,12 +266,13 @@ namespace SensoreApp.Controllers
             {
                 return NotFound();
             }
-
+            // Get real patient name
+            var user = await _context.Users.FindAsync(report.UserID);
             // Build preview view model (same as Preview action)
             var viewModel = new ReportPreviewViewModel
             {
                 ReportID = report.ReportID,
-                PatientName = "John Doe", // TODO: Get from Users table
+                PatientName = user != null ? $"{user.FirstName} {user.LastName}" : "Unknown User",
                 DateFrom = report.DateFrom,
                 DateTo = report.DateTo,
                 ComparisonDateFrom = report.ComparisonDateFrom,

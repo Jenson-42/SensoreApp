@@ -34,20 +34,26 @@ namespace SensoreApp.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<DateTime?>("EndTime")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Reason")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<DateTime>("StartTime")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Status")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)")
+                        .HasDefaultValue("New");
 
                     b.Property<decimal>("ThresholdPct")
                         .HasColumnType("decimal(5,2)");
@@ -62,6 +68,8 @@ namespace SensoreApp.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("AlertId");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("Alerts");
                 });
@@ -224,7 +232,16 @@ namespace SensoreApp.Migrations
 
                     b.HasKey("UserId");
 
-                    b.ToTable("User");
+                    b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("SensoreApp.Models.Alert", b =>
+                {
+                    b.HasOne("SensoreApp.Models.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("SensoreApp.Models.ReportFrame", b =>

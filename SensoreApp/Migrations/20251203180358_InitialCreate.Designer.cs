@@ -12,8 +12,8 @@ using SensoreApp.Data;
 namespace SensoreApp.Migrations
 {
     [DbContext(typeof(AppDBContext))]
-    [Migration("20251127063546_AddUserTable")]
-    partial class AddUserTable
+    [Migration("20251203180358_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -25,38 +25,54 @@ namespace SensoreApp.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("SensoreApp.Models.AlertSystem", b =>
+            modelBuilder.Entity("SensoreApp.Models.Alert", b =>
                 {
-                    b.Property<int>("AlertSystemId")
+                    b.Property<int>("AlertId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AlertSystemId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AlertId"));
 
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<DateTime?>("AcknowledgedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("FrameId")
-                        .HasColumnType("int");
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
 
-                    b.Property<int>("PatientId")
-                        .HasColumnType("int");
+                    b.Property<DateTime?>("EndTime")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Reason")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
-                    b.Property<int?>("ReviewedBy")
-                        .HasColumnType("int");
-
-                    b.Property<int>("SeverityLevel")
-                        .HasColumnType("int");
+                    b.Property<DateTime>("StartTime")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Status")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)")
+                        .HasDefaultValue("New");
 
-                    b.HasKey("AlertSystemId");
+                    b.Property<decimal>("ThresholdPct")
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<float>("TriggerValue")
+                        .HasColumnType("real");
+
+                    b.Property<int>("TriggeringFrameId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("AlertId");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("Alerts");
                 });
@@ -219,7 +235,16 @@ namespace SensoreApp.Migrations
 
                     b.HasKey("UserId");
 
-                    b.ToTable("User");
+                    b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("SensoreApp.Models.Alert", b =>
+                {
+                    b.HasOne("SensoreApp.Models.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("SensoreApp.Models.ReportFrame", b =>

@@ -20,13 +20,15 @@ namespace SensoreApp.Controllers
         // Main dashboard page
         public async Task<IActionResult> Index(int? userId)
         {
-            // TODO: Get userId from logged-in user session
-            // For now, using parameter or default to user 1
+            // TODO: Replace with authenticated user ID once login system is implemented
             int currentUserId = userId ?? 1;
+            // Get real patient name from Users table
+            var user = await _context.Users.FindAsync(currentUserId);
+            string patientName = user != null ? $"{user.FirstName} {user.LastName}" : "Unknown User";
 
             var viewModel = new PatientDashboardViewModel
             {
-                PatientName = "John Doe", // TODO: Get from Users table when teammate creates it
+                PatientName = patientName,
                 LastUploadTime = DateTime.Now.AddMinutes(-15),
                 AlertThresholdPercent = 80 // Default threshold
             };
@@ -54,22 +56,20 @@ namespace SensoreApp.Controllers
                 viewModel.COV = 0;
             }
 
-            // Sample alerts (TODO: replace with real Alerts table data when teammate creates it)
-            viewModel.RecentAlerts = new List<AlertInfo>
-            {
-                new AlertInfo
+            // Get REAL recent alerts from database
+            viewModel.RecentAlerts = await _context.Alerts
+                .Where(a => a.UserId == currentUserId)
+                .OrderByDescending(a => a.CreatedAt)
+                .Take(5) // Last 5 alerts
+                .Select(a => new AlertInfo
                 {
-                    AlertID = 1,
-                    Status = "Normal pressure restored",
-                    Timestamp = DateTime.Now.AddMinutes(-15)
-                },
-                new AlertInfo
-                {
-                    AlertID = 2,
-                    Status = "High pressure detected",
-                    Timestamp = DateTime.Now.AddMinutes(-47)
-                }
-            };
+                    AlertID = a.AlertId,
+                    Status = a.Status == "New" ? "High Pressure Detected" : "Normal pressure restored",
+                    Timestamp = a.CreatedAt,
+                    Reason = a.Reason,
+                    TriggerValue = a.TriggerValue
+                })
+                .ToListAsync();
 
             // Sample comments (TODO: replace with real Comments table data when teammate creates it)
             viewModel.Comments = new List<CommentInfo>

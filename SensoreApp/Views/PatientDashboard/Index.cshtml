@@ -115,20 +115,46 @@
                     {
                         @foreach (var alert in Model.RecentAlerts)
                         {
-                            <div class="alert @(alert.Status.Contains("Normal") ? "alert-success" : "alert-danger") mb-2" role="alert">
+                            <div class="alert @(alert.Status.Contains("Normal") ? "alert-success" : "alert-danger") mb-3" role="alert">
                                 <div class="d-flex justify-content-between align-items-start">
-                                    <div>
-                                        @if (alert.Status.Contains("Normal"))
-                                        {
-                                            <i class="bi bi-check-circle-fill me-2"></i>
-                                        }
-                                        else
-                                        {
-                                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                                        }
-                                        <strong>@alert.Status</strong>
+                                    <div class="d-flex align-items-start">
+                                        <div class="me-2">
+                                            @if (alert.Status.Contains("Normal"))
+                                            {
+                                                <i class="bi bi-check-circle-fill fs-4"></i>
+                                            }
+                                            else
+                                            {
+                                                <i class="bi bi-exclamation-triangle-fill fs-4"></i>
+                                            }
+                                        </div>
+                                        <div>
+                                            <strong>@alert.Status</strong>
+                                            <div class="small text-muted">@alert.Timestamp.ToString("HH:mm")</div>
+                                        </div>
                                     </div>
-                                    <small class="text-muted">@alert.Timestamp.ToString("HH:mm")</small>
+                                </div>
+
+                                <!-- Expanded details -->
+                                <div class="mt-2 ps-4">
+                                    @* Reason line *@
+                                    @if (!string.IsNullOrWhiteSpace(alert.Reason))
+                                    {
+                                        <div class="small">
+                                            <span class="me-2">ℹ️</span>
+                                            <strong>Reason:</strong>
+                                            <span class="ms-1">@alert.Reason</span>
+                                        </div>
+                                    }
+
+                                    @* Trigger Value line *@
+                                    <div class="small mt-1">
+                                        <span class="me-2">🔧</span>
+                                        <strong>Trigger Value:</strong>
+                                        <span class="ms-1">
+                                            @(alert.TriggerValue.HasValue? alert.TriggerValue.Value.ToString("F2") : "N/A")
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
                         }
@@ -137,6 +163,7 @@
                     {
                         <p class="text-muted">No recent alerts</p>
                     }
+
                 </div>
             </div>
 

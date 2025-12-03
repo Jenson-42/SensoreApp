@@ -31,6 +31,8 @@
         public int AlertID { get; set; }
         public string Status { get; set; } = string.Empty; // "Normal" or "High Pressure"
         public DateTime Timestamp { get; set; }
+        public string? Reason { get; set; } 
+        public float? TriggerValue { get; set; } 
     }
 
     // Helper class for displaying comments
