@@ -15,6 +15,8 @@ namespace SensoreApp.Data
         public DbSet<ReportMetric> ReportMetrics { get; set; }
         public DbSet<ReportFrame> ReportFrames { get; set; }
         public DbSet<Alert> Alerts { get; set; }
+        public DbSet<ThresholdSettings> ThresholdSettings { get; set; }
+
 
         // Tables my teammates will add later (commented out for now)
         // public DbSet<User> Users { get; set; }
