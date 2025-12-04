@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SensoreApp.Data;
 
@@ -11,9 +12,11 @@ using SensoreApp.Data;
 namespace SensoreApp.Migrations
 {
     [DbContext(typeof(AppDBContext))]
-    partial class AppDBContextModelSnapshot : ModelSnapshot
+    [Migration("20251204203359_ConfigureReportNavigationProperties")]
+    partial class ConfigureReportNavigationProperties
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -285,16 +288,6 @@ namespace SensoreApp.Migrations
                         .HasColumnType("nvarchar(255)");
 
                     b.HasDiscriminator().HasValue("Clinician");
-                });
-
-            modelBuilder.Entity("SensoreApp.Models.Patient", b =>
-                {
-                    b.HasBaseType("SensoreApp.Models.User");
-
-                    b.Property<DateTime?>("DateOfBirth")
-                        .HasColumnType("datetime2");
-
-                    b.HasDiscriminator().HasValue("Patient");
                 });
 
             modelBuilder.Entity("SensoreApp.Models.Alert", b =>

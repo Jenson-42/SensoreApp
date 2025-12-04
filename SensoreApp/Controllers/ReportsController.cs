@@ -33,15 +33,16 @@ namespace SensoreApp.Controllers
             // If clinician, get list of assigned patients
             if (userType.ToLower() == "clinician")
             {
-                // Get REAL list of patients from database
-                ViewBag.PatientList = await _context.Users
-                    .Where(u => u.IsActive) // Only active users
-                    .Select(u => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem
-                    {
-                        Value = u.UserId.ToString(),
-                        Text = $"{u.FirstName} {u.LastName}"
-                    })
-                    .ToListAsync();
+                // Get REAL list of active PATIENTS from database (exclude Clinicians)
+                ViewBag.PatientList = await _context.Patients  // Use Patients DbSet directly
+                  .Where(p => p.IsActive)
+                  .OrderBy(p => p.LastName)
+                  .Select(p => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem
+                  {
+                  Value = p.UserId.ToString(),
+                  Text = $"{p.FirstName} {p.LastName}"
+                  })
+                     .ToListAsync();
             }
 
             // Load available snapshots based on date range
@@ -170,28 +171,44 @@ namespace SensoreApp.Controllers
             var report = await _context.Reports
                 .Include(r => r.ReportMetric)
                 .Include(r => r.ReportFrame)
+                .Include(r => r.RequestedByUser)  // Load the clinician/user who requested
+                .Include(r => r.User)              // Load the patient
                 .FirstOrDefaultAsync(r => r.ReportID == id);
 
             if (report == null)
             {
                 return NotFound();
             }
-            // Get real patient name first
-            var user = await _context.Users.FindAsync(report.UserID);
+            // Now access directly without additional queries
+            var patientName = report.User != null
+                ? $"{report.User.FirstName} {report.User.LastName}"
+                : "Unknown User";
+
+            var clinicianName = report.RequestedByUser is Clinician clinician
+                ? $"Dr. {clinician.FirstName} {clinician.LastName}"
+                : report.RequestedByUser != null
+                    ? $"{report.RequestedByUser.FirstName} {report.RequestedByUser.LastName}"
+                    : "N/A";
+            var clinicianEmail = report.RequestedByUser is Clinician c
+                ? c.WorkEmail
+                : report.RequestedByUser?.Email ?? "N/A";
+
             // Build preview view model
             var viewModel = new ReportPreviewViewModel
             {
                 ReportID = report.ReportID,
-                PatientName = user != null ? $"{user.FirstName} {user.LastName}" : "Unknown User",
+                PatientName = patientName,
                 DateFrom = report.DateFrom,
                 DateTo = report.DateTo,
                 ComparisonDateFrom = report.ComparisonDateFrom,
                 ComparisonDateTo = report.ComparisonDateTo,
                 GeneratedAt = report.GeneratedAt,
                 ReportType = report.ReportType,
+                ClinicianName = clinicianName,
+                ClinicianEmail = clinicianEmail,
                 Metrics = new List<ReportMetricDisplay>()
             };
-
+            
             // Get metric data
             foreach (var metric in report.ReportMetric)
             {
@@ -292,29 +309,44 @@ namespace SensoreApp.Controllers
             var report = await _context.Reports
                 .Include(r => r.ReportMetric)
                 .Include(r => r.ReportFrame)
+                .Include(r => r.RequestedByUser)  // Load the clinician/user who requested
+                .Include(r => r.User)              // Load the patient
                 .FirstOrDefaultAsync(r => r.ReportID == id);
 
             if (report == null)
             {
                 return NotFound();
             }
-            // Get real patient name
-            var user = await _context.Users.FindAsync(report.UserID);
+            var patientName = report.User != null
+                ? $"{report.User.FirstName} {report.User.LastName}"
+                : "Unknown User";
+
+            var clinicianName = report.RequestedByUser is Clinician clinician
+                ? $"Dr. {clinician.FirstName} {clinician.LastName}"
+                : report.RequestedByUser != null
+                    ? $"{report.RequestedByUser.FirstName} {report.RequestedByUser.LastName}"
+                    : "N/A";
+
+            var clinicianEmail = report.RequestedByUser is Clinician c
+                ? c.WorkEmail
+                : report.RequestedByUser?.Email ?? "N/A";
+           
             // Build preview view model (same as Preview action)
             var viewModel = new ReportPreviewViewModel
             {
                 ReportID = report.ReportID,
-                PatientName = user != null ? $"{user.FirstName} {user.LastName}" : "Unknown User",
+                PatientName = patientName,
                 DateFrom = report.DateFrom,
                 DateTo = report.DateTo,
                 ComparisonDateFrom = report.ComparisonDateFrom,
                 ComparisonDateTo = report.ComparisonDateTo,
                 GeneratedAt = report.GeneratedAt,
                 ReportType = report.ReportType,
+                ClinicianName = clinicianName,
+                ClinicianEmail = clinicianEmail,
                 Metrics = new List<ReportMetricDisplay>()
 
             };
-
             // Get metric data
             foreach (var metric in report.ReportMetric)
             {
@@ -572,6 +604,10 @@ namespace SensoreApp.Controllers
         public string ReportType { get; set; } = string.Empty;
         public List<ReportMetricDisplay> Metrics { get; set; } = new();
         public int FrameCount { get; set; }
+        // NEW: Clinician Information
+        public string ClinicianName { get; set; } = "N/A";
+        public string ClinicianEmail { get; set; } = "N/A";
+
 
         // Chart data properties
         public List<string> ChartLabels { get; set; } = new();

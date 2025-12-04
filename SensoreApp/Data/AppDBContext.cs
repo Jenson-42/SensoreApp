@@ -16,17 +16,18 @@ namespace SensoreApp.Data
         public DbSet<ReportFrame> ReportFrames { get; set; }
         public DbSet<Alert> Alerts { get; set; }
         public DbSet<User> Users { get; set; }
-        public DbSet<Clinician> Clinician { get; set; }
+        public DbSet<Clinician> Clinicians { get; set; }
         public DbSet<ThresholdSettings> ThresholdSettings { get; set; }
+        public DbSet<Patient> Patients { get; set; }
 
         // Tables my teammates will add later (commented out for now)
-        // public DbSet<SensorDevice> SensorDevices { get; set; }
+       
         // public DbSet<SensorFrame> SensorFrames { get; set; }
         // public DbSet<Comment> Comments { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            base.OnModelCreating(modelBuilder);
+            
 
             // Configure FrameMetric
             modelBuilder.Entity<FrameMetric>(entity =>
@@ -164,6 +165,42 @@ namespace SensoreApp.Data
                 entity.Property(e => e.IsActive)
                     .IsRequired();
             });
+            modelBuilder.Entity<User>()
+              .HasDiscriminator<string>("Discriminator")
+              .HasValue<User>("User")
+              .HasValue<Clinician>("Clinician")
+              .HasValue<Patient>("Patient");  
+
+            modelBuilder.Entity<Clinician>(entity =>
+            {
+                entity.Property(e => e.WorkEmail)
+                    .IsRequired()
+                    .HasMaxLength(255);
+                entity.Property(e => e.PersonalEmail)
+                    .IsRequired()
+                    .HasMaxLength(255);
+            });
+
+            // NEW: Configure Patient-specific properties
+            modelBuilder.Entity<Patient>(entity =>
+            {
+                entity.Property(e => e.DateOfBirth)
+                .IsRequired(false); // Optional field
+            });
+            modelBuilder.Entity<Report>()
+       .HasOne(r => r.RequestedByUser)
+       .WithMany()
+       .HasForeignKey(r => r.RequestedBy)
+       .OnDelete(DeleteBehavior.Restrict); // Prevent cascade delete
+
+            modelBuilder.Entity<Report>()
+                .HasOne(r => r.User)
+                .WithMany()
+                .HasForeignKey(r => r.UserID)
+                .OnDelete(DeleteBehavior.Restrict); // Prevent cascade delete
+
+            base.OnModelCreating(modelBuilder);
         }
     }
-}
+    }
+

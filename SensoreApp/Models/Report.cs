@@ -13,9 +13,9 @@
         public DateTime GeneratedAt { get; set; }
         public string ReportType { get; set; } = string.Empty; // gives it a default empty value
 
-        // Navigation properties - will be enabled when teammates create their models
-        // public Users? RequestedByUser { get; set; }
-        // public Users? User { get; set; }
+         public User? RequestedByUser { get; set; }
+         public User? User { get; set; }
+       
 
 
         public ICollection<ReportMetric>? ReportMetric { get; set; }

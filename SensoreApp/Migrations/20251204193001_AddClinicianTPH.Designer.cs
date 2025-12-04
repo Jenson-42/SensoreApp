@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SensoreApp.Data;
 
@@ -11,9 +12,11 @@ using SensoreApp.Data;
 namespace SensoreApp.Migrations
 {
     [DbContext(typeof(AppDBContext))]
-    partial class AppDBContextModelSnapshot : ModelSnapshot
+    [Migration("20251204193001_AddClinicianTPH")]
+    partial class AddClinicianTPH
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -145,10 +148,6 @@ namespace SensoreApp.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("ReportID");
-
-                    b.HasIndex("RequestedBy");
-
-                    b.HasIndex("UserID");
 
                     b.ToTable("Reports");
                 });
@@ -287,16 +286,6 @@ namespace SensoreApp.Migrations
                     b.HasDiscriminator().HasValue("Clinician");
                 });
 
-            modelBuilder.Entity("SensoreApp.Models.Patient", b =>
-                {
-                    b.HasBaseType("SensoreApp.Models.User");
-
-                    b.Property<DateTime?>("DateOfBirth")
-                        .HasColumnType("datetime2");
-
-                    b.HasDiscriminator().HasValue("Patient");
-                });
-
             modelBuilder.Entity("SensoreApp.Models.Alert", b =>
                 {
                     b.HasOne("SensoreApp.Models.User", null)
@@ -304,25 +293,6 @@ namespace SensoreApp.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("SensoreApp.Models.Report", b =>
-                {
-                    b.HasOne("SensoreApp.Models.User", "RequestedByUser")
-                        .WithMany()
-                        .HasForeignKey("RequestedBy")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("SensoreApp.Models.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserID")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("RequestedByUser");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("SensoreApp.Models.ReportFrame", b =>
