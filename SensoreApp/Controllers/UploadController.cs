@@ -35,10 +35,15 @@ namespace SensoreApp.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ProcessCSV(IFormFile csvFile, int userId = 1)
         {
-            // Validate file was uploaded
-            if (csvFile == null || csvFile.Length == 0)
+            if (csvFile == null)
             {
                 TempData["Error"] = "Please select a CSV file to upload.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            if (csvFile.Length == 0)
+            {
+                TempData["Error"] = "File is empty";
                 return RedirectToAction(nameof(Index));
             }
 
