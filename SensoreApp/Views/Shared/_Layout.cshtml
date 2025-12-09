@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/SensoreApp.styles.css" asp-append-version="true" />
+    @RenderSection("Styles", required: false)
 </head>
 <body>
     <header>
@@ -26,10 +27,10 @@
                             <a class="nav-link text-dark" asp-area="" asp-controller="FrameMetrics" asp-action="Index">Heatmap</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Reports" asp-action="Index">Report Builder</a>
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Upload" asp-action="Index">Upload CSV</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Upload" asp-action="Index">Upload CSV</a>
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Reports" asp-action="Index">Report Builder</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>

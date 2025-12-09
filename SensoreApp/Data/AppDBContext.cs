@@ -19,9 +19,11 @@ namespace SensoreApp.Data
         public DbSet<Clinician> Clinicians { get; set; }
         public DbSet<ThresholdSettings> ThresholdSettings { get; set; }
         public DbSet<Patient> Patients { get; set; }
+        public DbSet<PatientClinician> PatientClinicians { get; set; }
+
 
         // Tables my teammates will add later (commented out for now)
-       
+
         // public DbSet<SensorFrame> SensorFrames { get; set; }
         // public DbSet<Comment> Comments { get; set; }
 
@@ -188,16 +190,46 @@ namespace SensoreApp.Data
                 .IsRequired(false); // Optional field
             });
             modelBuilder.Entity<Report>()
-       .HasOne(r => r.RequestedByUser)
-       .WithMany()
-       .HasForeignKey(r => r.RequestedBy)
-       .OnDelete(DeleteBehavior.Restrict); // Prevent cascade delete
+                    .HasOne(r => r.RequestedByUser)
+                    .WithMany()
+                    .HasForeignKey(r => r.RequestedBy)
+                    .OnDelete(DeleteBehavior.Restrict); // Prevent cascade delete
 
             modelBuilder.Entity<Report>()
                 .HasOne(r => r.User)
                 .WithMany()
                 .HasForeignKey(r => r.UserID)
                 .OnDelete(DeleteBehavior.Restrict); // Prevent cascade delete
+
+            // Configure many-to-many between Patient and Clinician using PatientClinician join entity
+            modelBuilder.Entity<PatientClinician>()
+                .HasKey(pc => new { pc.PatientID, pc.ClinicianID });
+
+            modelBuilder.Entity<PatientClinician>()
+                .HasOne(pc => pc.Patient)
+                .WithMany(p => p.PatientClinicians)   // navigation property in Patient
+                .HasForeignKey(pc => pc.PatientID)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<PatientClinician>()
+                .HasOne(pc => pc.Clinician)
+                .WithMany(c => c.PatientClinicians)   // navigation property in Clinician
+                .HasForeignKey(pc => pc.ClinicianID)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<ThresholdSettings>(entity =>
+            {
+                entity.HasKey(e => e.ThresholdID);
+
+                entity.Property(e => e.ThresholdValue)
+                    .HasColumnType("decimal(5,2)");
+
+                entity.Property(e => e.CreatedAt)
+                    .HasDefaultValueSql("GETDATE()"); // ensures SQL default, not just C#
+
+                
+            });
+
 
             base.OnModelCreating(modelBuilder);
         }

@@ -27,9 +27,26 @@
                     <h5 class="mb-0">Live Heatmap (32 X 32 grid)</h5>
                 </div>
                 <div class="card-body text-center">
-                    <div id="heatmapPreview" style="width: 100%; height: 400px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-direction: column;">
-                        <p class="text-white fs-5 mb-2">Live Heatmap Preview</p>
-                        <p class="text-white-50 small">(32x32 pressure map will display here)</p>
+                    <div id="heatmapPreview" style="width: 100%; height: 400px; position: relative; background: #1a1a1a; border-radius: 8px;">
+                        <!-- Heatmap Grid Container -->
+                        <div class="heatmap-grid" id="heatmapGrid"></div>
+
+                        <!-- Legend -->
+                        <div style="position: absolute; bottom: 10px; right: 10px; background: rgba(255,255,255,0.9); padding: 10px; border-radius: 5px;">
+                            <div style="font-size: 11px; font-weight: bold; margin-bottom: 5px;">Pressure Scale</div>
+                            <div style="display: flex; align-items: center; gap: 5px;">
+                                <div style="width: 20px; height: 15px; background: #2E7D32;"></div>
+                                <span style="font-size: 10px;">Low</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 5px; margin-top: 3px;">
+                                <div style="width: 20px; height: 15px; background: #FFA726;"></div>
+                                <span style="font-size: 10px;">Medium</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 5px; margin-top: 3px;">
+                                <div style="width: 20px; height: 15px; background: #D32F2F;"></div>
+                                <span style="font-size: 10px;">High</span>
+                            </div>
+                        </div>
                     </div>
                     <div class="mt-3">
                         <a href="@Url.Action("Index", "FrameMetrics", new { frameId = Model.CurrentFrameID })" class="btn btn-info">
@@ -300,5 +317,139 @@
                 bsToast.hide();
             });
         }, 3000);
+           
+        // Generate realistic heatmap on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            generateRealisticHeatmap();
+
+            // Animate heatmap every 3 seconds to simulate live data
+            setInterval(updateHeatmap, 3000);
+        });
+
+        function generateRealisticHeatmap() {
+            const grid = document.getElementById('heatmapGrid');
+            if (!grid) return;
+
+            grid.innerHTML = ''; // Clear existing cells
+
+            // Create 32x32 grid
+            for (let row = 0; row < 32; row++) {
+                for (let col = 0; col < 32; col++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'heatmap-cell';
+
+                    // Generate realistic sitting pressure pattern
+                    const pressure = calculatePressure(row, col);
+                    cell.classList.add(getPressureClass(pressure));
+                    cell.setAttribute('data-row', row);
+                    cell.setAttribute('data-col', col);
+                    cell.setAttribute('data-pressure', pressure);
+
+                    // Tooltip on hover
+                    cell.title = `Position: (${row}, ${col})\nPressure: ${pressure.toFixed(0)} PSI`;
+
+                    grid.appendChild(cell);
+                }
+            }
+        }
+
+        function calculatePressure(row, col) {
+            // Simulate realistic sitting pattern (high pressure in buttocks area)
+            const centerRow = 20;
+            const centerCol = 16;
+
+            // Calculate distance from pressure center
+            const distanceFromCenter = Math.sqrt(
+                Math.pow(row - centerRow, 2) +
+                Math.pow(col - centerCol, 2)
+            );
+
+            // High pressure region (buttocks)
+            if (row >= 16 && row <= 24 && col >= 12 && col <= 20) {
+                const localDist = Math.sqrt(
+                    Math.pow(row - 20, 2) +
+                    Math.pow(col - 16, 2)
+                );
+                return Math.max(0, 500 - localDist * 40 + Math.random() * 50);
+            }
+            // Medium pressure (thighs)
+            else if (row >= 10 && row <= 28 && col >= 8 && col <= 24) {
+                return 100 + Math.random() * 150;
+            }
+            // Low/no pressure elsewhere
+            else {
+                return Math.random() * 30;
+            }
+        }
+
+        function getPressureClass(pressure) {
+            if (pressure < 30) return 'pressure-none';
+            if (pressure < 200) return 'pressure-low';
+            if (pressure < 400) return 'pressure-medium';
+            if (pressure < 550) return 'pressure-high';
+            return 'pressure-critical';
+        }
+
+        function updateHeatmap() {
+            // Slightly animate existing cells to simulate live data
+            const cells = document.querySelectorAll('.heatmap-cell');
+            cells.forEach(cell => {
+                const currentPressure = parseFloat(cell.getAttribute('data-pressure'));
+                const variation = (Math.random() - 0.5) * 30; // Random variation
+                const newPressure = Math.max(0, currentPressure + variation);
+
+                cell.setAttribute('data-pressure', newPressure);
+                cell.className = 'heatmap-cell ' + getPressureClass(newPressure);
+                cell.title = `Position: (${cell.dataset.row}, ${cell.dataset.col})\nPressure: ${newPressure.toFixed(0)} PSI`;
+            });
+        }
     </script>
+}
+@section Styles {
+    <style>
+        .heatmap-grid {
+            display: grid;
+            grid-template-columns: repeat(32, 1fr);
+            grid-template-rows: repeat(32, 1fr);
+            width: 100%;
+            height: 100%;
+            gap: 1px;
+            padding: 10px;
+        }
+
+        .heatmap-cell {
+            width: 100%;
+            height: 100%;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            border-radius: 2px;
+        }
+
+            .heatmap-cell:hover {
+                transform: scale(1.5);
+                box-shadow: 0 0 10px rgba(255,255,255,0.5);
+                z-index: 10;
+                cursor: pointer;
+            }
+
+        /* Pressure color classes */
+        .pressure-none {
+            background: #1a1a1a;
+        }
+
+        .pressure-low {
+            background: #2E7D32;
+        }
+
+        .pressure-medium {
+            background: #FFA726;
+        }
+
+        .pressure-high {
+            background: #D32F2F;
+        }
+
+        .pressure-critical {
+            background: #B71C1C;
+        }
+    </style>
 }

@@ -22,27 +22,45 @@ namespace SensoreApp.Controllers
 
         // GET: Reports
         // Main report builder page
-        public async Task<IActionResult> Index(string userType = "patient", int? userId = null, DateTime? dateFrom = null, DateTime? dateTo = null)
+        public async Task<IActionResult> Index(int? userId = null, DateTime? dateFrom = null, DateTime? dateTo = null)
         {
-            // TODO: Replace with actual authentication
-            // For now, using URL parameter: ?userType=patient or ?userType=clinician
+            // Get current user ID (in production, this would come from authentication)
+            int currentUserId = userId ?? 1;
+
+            // Load the user from database to check their type
+            var currentUser = await _context.Users.FindAsync(currentUserId);
+
+            if (currentUser == null)
+            {
+                return NotFound("User not found");
+            }
+
+            // Auto-detect user type based on database discriminator
+            string userType = currentUser is Clinician ? "clinician" : "patient";
 
             ViewBag.UserType = userType;
-            ViewBag.CurrentUserId = userId ?? 1;
+            ViewBag.CurrentUserId = currentUserId;
+            ViewBag.CurrentUserName = $"{currentUser.FirstName} {currentUser.LastName}";
 
-            // If clinician, get list of assigned patients
-            if (userType.ToLower() == "clinician")
+            if (currentUser is Clinician clinicianUser)
             {
-                // Get REAL list of active PATIENTS from database (exclude Clinicians)
-                ViewBag.PatientList = await _context.Patients  // Use Patients DbSet directly
-                  .Where(p => p.IsActive)
-                  .OrderBy(p => p.LastName)
-                  .Select(p => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem
-                  {
-                  Value = p.UserId.ToString(),
-                  Text = $"{p.FirstName} {p.LastName}"
-                  })
-                     .ToListAsync();
+                ViewBag.PatientList = await _context.Patients
+                    .Where(p => p.IsActive &&
+                                _context.PatientClinicians.Any(pc =>
+                                    pc.ClinicianID == clinicianUser.UserId &&
+                                    pc.PatientID == p.UserId))
+                    .OrderBy(p => p.LastName)
+                    .Select(p => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem
+                    {
+                        Value = p.UserId.ToString(),
+                        Text = $"{p.FirstName} {p.LastName}"
+                    })
+                    .ToListAsync();
+            }
+            else
+            {
+                // If PATIENT, no dropdown needed - they only see their own data
+                ViewBag.PatientList = null;
             }
 
             // Load available snapshots based on date range
@@ -63,13 +81,13 @@ namespace SensoreApp.Controllers
                 .OrderBy(m => m.ComputedAt)
                 .ToListAsync();
 
-            // Smart sampling: Limit to maximum 20 frames, evenly distributed
-            int maxFrames = 20;
+            // Smart sampling: Limit to maximum 6 frames, evenly distributed
+            int maxFrames = 6;
             var sampledFrames = new List<dynamic>();
 
             if (allFrames.Count <= maxFrames)
             {
-                // Show all frames if 20 or fewer
+                // Show all frames if 6 or fewer
                 sampledFrames = allFrames.Select(m => new
                 {
                     m.FrameID,
@@ -192,6 +210,20 @@ namespace SensoreApp.Controllers
             var clinicianEmail = report.RequestedByUser is Clinician c
                 ? c.WorkEmail
                 : report.RequestedByUser?.Email ?? "N/A";
+            
+            // Find the assigned clinician for this patient
+            var assignedClinician = await _context.PatientClinicians
+                .Where(pc => pc.PatientID == report.UserID)
+                .Select(pc => pc.Clinician)
+                .FirstOrDefaultAsync();
+
+            string assignedClinicianName = assignedClinician != null
+                ? $"{assignedClinician.FirstName} {assignedClinician.LastName}"
+                : "No clinician assigned";
+
+            string assignedClinicianEmail = assignedClinician?.Email ?? "N/A";
+
+
 
             // Build preview view model
             var viewModel = new ReportPreviewViewModel
@@ -204,8 +236,11 @@ namespace SensoreApp.Controllers
                 ComparisonDateTo = report.ComparisonDateTo,
                 GeneratedAt = report.GeneratedAt,
                 ReportType = report.ReportType,
-                ClinicianName = clinicianName,
-                ClinicianEmail = clinicianEmail,
+                ClinicianName = clinicianName,   // who requested
+                ClinicianEmail = clinicianEmail,  // who requested
+                AssignedClinicianName = assignedClinicianName,   // who is assigned
+                AssignedClinicianEmail = assignedClinicianEmail, // who is assigned
+                ClinicianNote = "No clinical notes available yet.", // Placeholder
                 Metrics = new List<ReportMetricDisplay>()
             };
             
@@ -265,6 +300,21 @@ namespace SensoreApp.Controllers
                     viewModel.COVData
                 );
             }
+            if (report.ReportFrame != null && report.ReportFrame.Any())
+            {
+                var frameIds = report.ReportFrame.Select(rf => rf.FrameID).ToList();
+
+                var frameMetrics = await _context.FrameMetrics
+                    .Where(fm => frameIds.Contains(fm.FrameID))
+                    .OrderBy(fm => fm.ComputedAt)
+                    .ToListAsync();
+
+                viewModel.SnapshotHeatmaps = frameMetrics
+                    .Select(fm => (fm.FrameID, GenerateHeatmapImageUrlForFrame(fm.FrameID)))
+                    .ToList();
+            }
+
+
 
             // Calculate REAL alert summary from Alerts table
             var alertsInPeriod = await _context.Alerts
@@ -330,7 +380,20 @@ namespace SensoreApp.Controllers
             var clinicianEmail = report.RequestedByUser is Clinician c
                 ? c.WorkEmail
                 : report.RequestedByUser?.Email ?? "N/A";
-           
+
+            // Find the assigned clinician for this patient
+            var assignedClinician = await _context.PatientClinicians
+                .Where(pc => pc.PatientID == report.UserID)
+                .Select(pc => pc.Clinician)
+                .FirstOrDefaultAsync();
+
+            string assignedClinicianName = assignedClinician != null
+                ? $"{assignedClinician.FirstName} {assignedClinician.LastName}"
+                : "No clinician assigned";
+
+            string assignedClinicianEmail = assignedClinician?.Email ?? "N/A";
+
+
             // Build preview view model (same as Preview action)
             var viewModel = new ReportPreviewViewModel
             {
@@ -344,6 +407,9 @@ namespace SensoreApp.Controllers
                 ReportType = report.ReportType,
                 ClinicianName = clinicianName,
                 ClinicianEmail = clinicianEmail,
+                ClinicianNote = "No clinical notes available yet.", // Placeholder
+                AssignedClinicianName = assignedClinicianName,   // who is assigned
+                AssignedClinicianEmail = assignedClinicianEmail, // who is assigned
                 Metrics = new List<ReportMetricDisplay>()
 
             };
@@ -399,6 +465,21 @@ namespace SensoreApp.Controllers
                     viewModel.COVData
                 );
             }
+            if (report.ReportFrame != null && report.ReportFrame.Any())
+            {
+                var frameIds = report.ReportFrame.Select(rf => rf.FrameID).ToList();
+
+                var frameMetrics = await _context.FrameMetrics
+                    .Where(fm => frameIds.Contains(fm.FrameID))
+                    .OrderBy(fm => fm.ComputedAt)
+                    .ToListAsync();
+
+                viewModel.SnapshotHeatmaps = frameMetrics
+                    .Select(fm => (fm.FrameID, GenerateHeatmapImageUrlForFrame(fm.FrameID)))
+                    .ToList();
+            }
+
+
 
             // Calculate REAL alert summary from Alerts table
             var alertsInPeriod = await _context.Alerts
@@ -571,6 +652,123 @@ namespace SensoreApp.Controllers
             var encodedChart = Uri.EscapeDataString(json);
             return $"https://quickchart.io/chart?c={encodedChart}&width=800&height=400";
         }
+        private string GenerateHeatmapImageUrlForFrame(int frameId)
+        {
+            var random = new Random(frameId); // seed for consistency per frame
+            var dataPoints = new List<object>();
+
+            for (int row = 0; row < 32; row++)
+            {
+                for (int col = 0; col < 32; col++)
+                {
+                    int pressure = CalculateSamplePressureInt(row, col, random);
+                    if (pressure > 30)
+                    {
+                        dataPoints.Add(new { x = col, y = 31 - row, pressure });
+                    }
+                }
+            }
+
+            var chartConfig = new
+            {
+                type = "bubble",
+                data = new
+                {
+                    datasets = new[]
+                    {
+                new {
+                    label = "High",
+                    data = dataPoints.Where(p => ((dynamic)p).pressure >= 400)
+                                     .Select(p => new { x = ((dynamic)p).x, y = ((dynamic)p).y, r = 4 }).ToList(),
+                    backgroundColor = "rgba(211, 47, 47, 0.9)"
+                },
+                new {
+                    label = "Medium",
+                    data = dataPoints.Where(p => ((dynamic)p).pressure >= 200 && ((dynamic)p).pressure < 400)
+                                     .Select(p => new { x = ((dynamic)p).x, y = ((dynamic)p).y, r = 3 }).ToList(),
+                    backgroundColor = "rgba(255, 167, 38, 0.9)"
+                },
+                new {
+                    label = "Low",
+                    data = dataPoints.Where(p => ((dynamic)p).pressure >= 30 && ((dynamic)p).pressure < 200)
+                                     .Select(p => new { x = ((dynamic)p).x, y = ((dynamic)p).y, r = 2 }).ToList(),
+                    backgroundColor = "rgba(46, 125, 50, 0.9)"
+                }
+            }
+                },
+                options = new
+                {
+                    responsive = false,
+                    layout = new { padding = 0 },
+                    plugins = new
+                    {
+                        legend = new { display = false },
+                        title = new { display = false },
+                        tooltip = new { enabled = false }
+                    },
+                    // Chart.js v3+ scales format for QuickChart
+                    scales = new
+                    {
+                        x = new
+                        {
+                            display = false,
+                            min = -1,
+                            max = 32,
+                            grid = new { display = false },
+                            ticks = new { display = false }
+                        },
+                        y = new
+                        {
+                            display = false,
+                            min = -1,
+                            max = 32,
+                            grid = new { display = false },
+                            ticks = new { display = false }
+                        }
+                    },
+                    elements = new
+                    {
+                        point = new { borderWidth = 0 }
+                    }
+                }
+            };
+
+            var json = System.Text.Json.JsonSerializer.Serialize(
+                chartConfig,
+                new System.Text.Json.JsonSerializerOptions
+                {
+                    Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+                });
+
+            // Small, clean thumbnail, no background clutter
+            var url = $"https://quickchart.io/chart?c={Uri.EscapeDataString(json)}&width=300&height=300&backgroundColor=white&format=png";
+
+
+            // Cache-bust per frame to avoid stale images
+            return $"{url}&v={frameId}";
+        }
+
+
+
+        private int CalculateSamplePressureInt(int row, int col, Random random)
+        {
+            // High pressure region (buttocks)
+            if (row >= 16 && row <= 24 && col >= 12 && col <= 20)
+            {
+                double dist = Math.Sqrt(Math.Pow(row - 20, 2) + Math.Pow(col - 16, 2));
+                return (int)Math.Max(0, 500 - dist * 40 + random.Next(0, 50));
+            }
+            // Medium pressure (thighs)
+            else if (row >= 10 && row <= 28 && col >= 8 && col <= 24)
+            {
+                return 100 + random.Next(0, 150);
+            }
+            // Low/no pressure
+            else
+            {
+                return random.Next(0, 30);
+            }
+        }
 
     }
 
@@ -607,6 +805,11 @@ namespace SensoreApp.Controllers
         // NEW: Clinician Information
         public string ClinicianName { get; set; } = "N/A";
         public string ClinicianEmail { get; set; } = "N/A";
+        // NEW: Placeholder for clinical notes
+        public string ClinicianNote { get; set; } = "No clinical notes available yet.";
+
+        public string AssignedClinicianName { get; set; } = "N/A";
+        public string AssignedClinicianEmail { get; set; } = "N/A";
 
 
         // Chart data properties
@@ -615,6 +818,9 @@ namespace SensoreApp.Controllers
         public List<decimal> ContactAreaData { get; set; } = new();
         public List<decimal> COVData { get; set; } = new();
         public string ChartImageUrl { get; set; } = string.Empty;
+        // NEW: Add heatmap URL
+        public List<(int FrameID, string HeatmapUrl)> SnapshotHeatmaps { get; set; } = new();
+
 
         // NEW: Alert Summary Properties
         public int NormalReadingsCount { get; set; }
@@ -622,6 +828,7 @@ namespace SensoreApp.Controllers
         public int CriticalAlertsCount { get; set; }
         public DateTime? MostRecentAlertTime { get; set; }
         public string? MostRecentAlertReason { get; set; }
+       
 
     }
 

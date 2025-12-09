@@ -104,6 +104,21 @@ namespace SensoreApp.Migrations
                     b.ToTable("FrameMetrics");
                 });
 
+            modelBuilder.Entity("SensoreApp.Models.PatientClinician", b =>
+                {
+                    b.Property<int>("PatientID")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ClinicianID")
+                        .HasColumnType("int");
+
+                    b.HasKey("PatientID", "ClinicianID");
+
+                    b.HasIndex("ClinicianID");
+
+                    b.ToTable("PatientClinicians");
+                });
+
             modelBuilder.Entity("SensoreApp.Models.Report", b =>
                 {
                     b.Property<int>("ReportID")
@@ -212,7 +227,9 @@ namespace SensoreApp.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ThresholdID"));
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
 
                     b.Property<decimal>("ThresholdValue")
                         .HasColumnType("decimal(5,2)");
@@ -221,6 +238,8 @@ namespace SensoreApp.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("ThresholdID");
+
+                    b.HasIndex("UserID");
 
                     b.ToTable("ThresholdSettings");
                 });
@@ -306,6 +325,25 @@ namespace SensoreApp.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("SensoreApp.Models.PatientClinician", b =>
+                {
+                    b.HasOne("SensoreApp.Models.Clinician", "Clinician")
+                        .WithMany("PatientClinicians")
+                        .HasForeignKey("ClinicianID")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("SensoreApp.Models.Patient", "Patient")
+                        .WithMany("PatientClinicians")
+                        .HasForeignKey("PatientID")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Clinician");
+
+                    b.Navigation("Patient");
+                });
+
             modelBuilder.Entity("SensoreApp.Models.Report", b =>
                 {
                     b.HasOne("SensoreApp.Models.User", "RequestedByUser")
@@ -347,11 +385,30 @@ namespace SensoreApp.Migrations
                     b.Navigation("Report");
                 });
 
+            modelBuilder.Entity("SensoreApp.Models.ThresholdSettings", b =>
+                {
+                    b.HasOne("SensoreApp.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserID");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("SensoreApp.Models.Report", b =>
                 {
                     b.Navigation("ReportFrame");
 
                     b.Navigation("ReportMetric");
+                });
+
+            modelBuilder.Entity("SensoreApp.Models.Clinician", b =>
+                {
+                    b.Navigation("PatientClinicians");
+                });
+
+            modelBuilder.Entity("SensoreApp.Models.Patient", b =>
+                {
+                    b.Navigation("PatientClinicians");
                 });
 #pragma warning restore 612, 618
         }

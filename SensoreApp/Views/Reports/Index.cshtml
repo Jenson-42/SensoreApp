@@ -2,6 +2,7 @@
     ViewData["Title"] = "Report Builder";
     var userType = ViewBag.UserType as string ?? "patient";
     var currentUserId = ViewBag.CurrentUserId as int? ?? 1;
+    var currentUserName = ViewBag.CurrentUserName as string ?? "User";
     var patientList = ViewBag.PatientList as List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>;
 }
 
@@ -12,6 +13,15 @@
                 <i class="bi bi-file-earmark-bar-graph"></i> Report Builder
             </h2>
             <p class="text-muted">Generate and download patient pressure analysis reports</p>
+
+            <!-- NEW: Show current user info -->
+            <div class="alert alert-info mt-3">
+                <i class="bi bi-person-circle"></i>
+                <strong>Logged in as:</strong> @currentUserName
+                <span class="badge @(userType == "clinician" ? "bg-primary" : "bg-success")">
+                    @(userType == "clinician" ? "Clinician" : "Patient")
+                </span>
+            </div>
         </div>
     </div>
 
@@ -27,9 +37,10 @@
                     <form id="reportForm" asp-action="GeneratePreview" asp-controller="Reports" method="post">
                         <input type="hidden" name="CurrentUserId" value="@currentUserId" />
 
-                        <!-- Patient Selection (Only for Clinicians) -->
-                        @if (userType.ToLower() == "clinician" && patientList != null)
+                        <!-- Patient Selection -->
+                        @if (userType == "clinician" && patientList != null && patientList.Any())
                         {
+                            <!-- CLINICIAN VIEW: Shows dropdown to select patient -->
                             <div class="mb-4">
                                 <label class="form-label fw-bold">
                                     <i class="bi bi-person"></i> Select Patient
@@ -41,11 +52,17 @@
                                         <option value="@patient.Value">@patient.Text</option>
                                     }
                                 </select>
+                                <small class="text-muted">Select which patient's data you want to include in the report</small>
                             </div>
                         }
                         else
                         {
+                            <!-- PATIENT VIEW: Automatically set to current user -->
                             <input type="hidden" name="SelectedPatientId" value="@currentUserId" />
+                            <div class="alert alert-success mb-4">
+                                <i class="bi bi-info-circle"></i>
+                                This report will be generated for your own data.
+                            </div>
                         }
 
                         <!-- Date Range Selection -->
@@ -141,11 +158,11 @@
                             </label>
                             <p class="text-muted small mb-2">
                                 Select specific time snapshots to include in the report
-                                @if (ViewBag.TotalFramesInRange != null && ViewBag.TotalFramesInRange > 20)
+                                @if (ViewBag.TotalFramesInRange != null && ViewBag.TotalFramesInRange > 6)
                                 {
                                     <br>
                                 
-                                    <span class="badge bg-info mt-1">Showing 20 representative frames (sampled from @ViewBag.TotalFramesInRange total)</span>
+                                    <span class="badge bg-info mt-1">Showing 6 representative frames (sampled from @ViewBag.TotalFramesInRange total)</span>
                                 }
                             </p>
 
@@ -161,7 +178,7 @@
                                                    value="@frame.FrameID"
                                                    checked>
                                             <label class="form-check-label d-flex align-items-center" for="snapshot@(frame.FrameID)">
-                                                <div class="me-3" style="width: 60px; height: 60px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 4px;"></div>
+                                                <canvas class="snapshot-canvas me-3" width="60" height="60" style="border-radius: 4px;"></canvas>
                                                 <div>
                                                     <strong>@frame.ComputedAt.ToString("HH:mm:ss")</strong><br>
                                                     <small class="text-muted">@frame.ComputedAt.ToString("dd/MM/yyyy")</small><br>
@@ -253,5 +270,22 @@
             // Reload page with date parameters
             window.location.href = `/Reports?userType=${userType}&dateFrom=${dateFrom}&dateTo=${dateTo}`;
         }
+                document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('.snapshot-canvas').forEach(canvas => {
+                const ctx = canvas.getContext('2d');
+                const gridSize = 32;
+                const cellSize = canvas.width / gridSize;
+
+                for (let row = 0; row < gridSize; row++) {
+                    for (let col = 0; col < gridSize; col++) {
+                        const pressure = Math.random() * 500;
+                        ctx.fillStyle = pressure > 400 ? '#D32F2F' :
+                                        pressure > 200 ? '#FFA726' :
+                                        '#2E7D32';
+                        ctx.fillRect(col * cellSize, row * cellSize, cellSize - 0.5, cellSize - 0.5);
+                    }
+                }
+            });
+        });
     </script>
 }

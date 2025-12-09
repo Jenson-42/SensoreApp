@@ -12,8 +12,8 @@ using SensoreApp.Data;
 namespace SensoreApp.Migrations
 {
     [DbContext(typeof(AppDBContext))]
-    [Migration("20251203180358_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20251209014347_FixThresholdSettingsFK")]
+    partial class FixThresholdSettingsFK
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -107,6 +107,21 @@ namespace SensoreApp.Migrations
                     b.ToTable("FrameMetrics");
                 });
 
+            modelBuilder.Entity("SensoreApp.Models.PatientClinician", b =>
+                {
+                    b.Property<int>("PatientID")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ClinicianID")
+                        .HasColumnType("int");
+
+                    b.HasKey("PatientID", "ClinicianID");
+
+                    b.HasIndex("ClinicianID");
+
+                    b.ToTable("PatientClinicians");
+                });
+
             modelBuilder.Entity("SensoreApp.Models.Report", b =>
                 {
                     b.Property<int>("ReportID")
@@ -148,6 +163,10 @@ namespace SensoreApp.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("ReportID");
+
+                    b.HasIndex("RequestedBy");
+
+                    b.HasIndex("UserID");
 
                     b.ToTable("Reports");
                 });
@@ -202,6 +221,32 @@ namespace SensoreApp.Migrations
                     b.ToTable("ReportMetrics");
                 });
 
+            modelBuilder.Entity("SensoreApp.Models.ThresholdSettings", b =>
+                {
+                    b.Property<int>("ThresholdID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ThresholdID"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
+
+                    b.Property<decimal>("ThresholdValue")
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<int?>("UserID")
+                        .HasColumnType("int");
+
+                    b.HasKey("ThresholdID");
+
+                    b.HasIndex("UserID");
+
+                    b.ToTable("ThresholdSettings");
+                });
+
             modelBuilder.Entity("SensoreApp.Models.User", b =>
                 {
                     b.Property<int>("UserId")
@@ -209,6 +254,11 @@ namespace SensoreApp.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("UserId"));
+
+                    b.Property<string>("Discriminator")
+                        .IsRequired()
+                        .HasMaxLength(13)
+                        .HasColumnType("nvarchar(13)");
 
                     b.Property<string>("Email")
                         .IsRequired()
@@ -236,6 +286,37 @@ namespace SensoreApp.Migrations
                     b.HasKey("UserId");
 
                     b.ToTable("Users");
+
+                    b.HasDiscriminator().HasValue("User");
+
+                    b.UseTphMappingStrategy();
+                });
+
+            modelBuilder.Entity("SensoreApp.Models.Clinician", b =>
+                {
+                    b.HasBaseType("SensoreApp.Models.User");
+
+                    b.Property<string>("PersonalEmail")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("WorkEmail")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.HasDiscriminator().HasValue("Clinician");
+                });
+
+            modelBuilder.Entity("SensoreApp.Models.Patient", b =>
+                {
+                    b.HasBaseType("SensoreApp.Models.User");
+
+                    b.Property<DateTime?>("DateOfBirth")
+                        .HasColumnType("datetime2");
+
+                    b.HasDiscriminator().HasValue("Patient");
                 });
 
             modelBuilder.Entity("SensoreApp.Models.Alert", b =>
@@ -245,6 +326,44 @@ namespace SensoreApp.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("SensoreApp.Models.PatientClinician", b =>
+                {
+                    b.HasOne("SensoreApp.Models.Clinician", "Clinician")
+                        .WithMany("PatientClinicians")
+                        .HasForeignKey("ClinicianID")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("SensoreApp.Models.Patient", "Patient")
+                        .WithMany("PatientClinicians")
+                        .HasForeignKey("PatientID")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Clinician");
+
+                    b.Navigation("Patient");
+                });
+
+            modelBuilder.Entity("SensoreApp.Models.Report", b =>
+                {
+                    b.HasOne("SensoreApp.Models.User", "RequestedByUser")
+                        .WithMany()
+                        .HasForeignKey("RequestedBy")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SensoreApp.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserID")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("RequestedByUser");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("SensoreApp.Models.ReportFrame", b =>
@@ -269,11 +388,30 @@ namespace SensoreApp.Migrations
                     b.Navigation("Report");
                 });
 
+            modelBuilder.Entity("SensoreApp.Models.ThresholdSettings", b =>
+                {
+                    b.HasOne("SensoreApp.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserID");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("SensoreApp.Models.Report", b =>
                 {
                     b.Navigation("ReportFrame");
 
                     b.Navigation("ReportMetric");
+                });
+
+            modelBuilder.Entity("SensoreApp.Models.Clinician", b =>
+                {
+                    b.Navigation("PatientClinicians");
+                });
+
+            modelBuilder.Entity("SensoreApp.Models.Patient", b =>
+                {
+                    b.Navigation("PatientClinicians");
                 });
 #pragma warning restore 612, 618
         }

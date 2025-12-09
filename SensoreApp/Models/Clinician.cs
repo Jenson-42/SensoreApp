@@ -6,6 +6,7 @@
         
         public required String WorkEmail { get; set; }
         public required String PersonalEmail { get; set; }
+        public ICollection<PatientClinician> PatientClinicians { get; set; } = new List<PatientClinician>();
 
 
     }

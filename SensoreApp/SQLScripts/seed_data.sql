@@ -1,6 +1,6 @@
--- 1. Regular User
+-- 1. Patient
 INSERT INTO Users (FirstName, LastName, Email, Phone, IsActive, Discriminator)
-VALUES ('John', 'Doe', 'john.doe@example.com', '07123456789', 1, 'User');
+VALUES ('John', 'Doe', 'john.doe@example.com', '07123456789', 1, 'Patient');
 
 -- 2. Clinician
 INSERT INTO Users (FirstName, LastName, Email, Phone, IsActive, Discriminator, WorkEmail, PersonalEmail)
@@ -264,3 +264,23 @@ VALUES
 (5, 122, 'Extreme pressure on lateral edge', 15.50, 70.00, '2025-12-08 15:00:00', '2025-12-08 15:30:00', 'New', NULL, GETDATE()),
 (8, 125, 'Contact area anomaly', 45.00, 78.00, '2025-12-09 16:00:00', NULL, 'New', NULL, GETDATE()),
 (3, 128, 'Pressure index trending upward', 13.90, 80.00, '2025-12-10 17:00:00', '2025-12-10 17:20:00', 'Acknowledged', '2025-12-10 17:40:00', GETDATE());
+---------------------------------------------------------------------------------------------------
+-- John Doe (Patient, UserId = 1) assigned to Sarah Smith (Clinician, UserId = 2)
+INSERT INTO PatientClinicians (PatientID, ClinicianID)
+VALUES (1, 2);
+
+-- Emily Taylor (Patient, UserId = 3) assigned to David Nguyen (Clinician, UserId = 4)
+INSERT INTO PatientClinicians (PatientID, ClinicianID)
+VALUES (3, 4);
+
+-- Liam Jones (Patient, UserId = 5) assigned to Sarah Smith (Clinician, UserId = 2)
+INSERT INTO PatientClinicians (PatientID, ClinicianID)
+VALUES (5, 2);
+
+-- Noah Wilson (Patient, UserId = 8) assigned to Aisha Khan (Clinician, UserId = 7)
+INSERT INTO PatientClinicians (PatientID, ClinicianID)
+VALUES (8, 7);
+
+-- Ethan White (Patient, UserId = 10) assigned to David Nguyen (Clinician, UserId = 4)
+INSERT INTO PatientClinicians (PatientID, ClinicianID)
+VALUES (10, 4);
