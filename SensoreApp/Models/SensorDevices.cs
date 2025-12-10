@@ -15,6 +15,8 @@ namespace SensoreApp.Models
         public DateTime RegisteredAt { get; set; } = DateTime.Now; // timestamp of when the device was registered which is the current time by default
 
         //additional property needed for CRUD in Views 
-        public bool IsActive { get; set; } //indicates if device is currently active 
+        public bool IsActive { get; set; } //indicates if device is currently active
+        
+       
     }
 }
