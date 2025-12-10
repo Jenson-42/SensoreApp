@@ -226,6 +226,9 @@ namespace SensoreApp.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("SensorDeviceID"));
 
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
                     b.Property<string>("Model")
                         .IsRequired()
                         .HasMaxLength(100)

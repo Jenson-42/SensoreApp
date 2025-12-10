@@ -14,5 +14,7 @@ namespace SensoreApp.Models
         public string? Model { get; set; } // model of the sensor device, ? allows database to accept null values as set in ERD
         public DateTime RegisteredAt { get; set; } = DateTime.Now; // timestamp of when the device was registered which is the current time by default
 
+        //additional property needed for CRUD in Views 
+        public bool IsActive { get; set; } //indicates if device is currently active 
     }
 }

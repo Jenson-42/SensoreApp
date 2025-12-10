@@ -12,8 +12,8 @@ using SensoreApp.Data;
 namespace SensoreApp.Migrations
 {
     [DbContext(typeof(AppDBContext))]
-    [Migration("20251210042506_AddSensorDeviceTable")]
-    partial class AddSensorDeviceTable
+    [Migration("20251210183715_SyncSensorDeviceModel")]
+    partial class SyncSensorDeviceModel
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -228,6 +228,9 @@ namespace SensoreApp.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("SensorDeviceID"));
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
 
                     b.Property<string>("Model")
                         .IsRequired()
