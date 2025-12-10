@@ -11,8 +11,10 @@ namespace SensoreApp.Models
 
         [Required] // data annotation to specify that this field is required (cannot be null)
         [MaxLength(100)] // data annotation to specify maximum length of the string based on ERD Model
+        //device model name 
         public string? Model { get; set; } // model of the sensor device, ? allows database to accept null values as set in ERD
         public DateTime RegisteredAt { get; set; } = DateTime.Now; // timestamp of when the device was registered which is the current time by default
-
+        // new addition as is a requirment for the CRUD pages in VIEW 
+        public bool IsActive { get; set; } // indicates if the device is currently active
     }
 }
