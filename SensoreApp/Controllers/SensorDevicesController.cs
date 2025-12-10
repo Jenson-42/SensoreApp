@@ -2,12 +2,13 @@
 using Microsoft.EntityFrameworkCore; // Using directive for Entity Framework Core for database operations
 using SensoreApp.Data; // Using directive for the application's data context
 using SensoreApp.Models;
-using System.Threading.Tasks; // Using directive for the application's models
+//using System.Threading.Tasks; // Using directive for the application's models
 
 namespace SensoreApp.Controllers
 {
     public class SensorDevicesController : Controller
     {
+        // Access SensorDevices table in the database
         private readonly AppDBContext _context; 
         private readonly ILogger<SensorDevicesController> _logger; // to add logging to system for easier debugging and tracking as well as auditing for admin dashboard
 
@@ -24,15 +25,20 @@ namespace SensoreApp.Controllers
             
             _logger.LogInformation("Fetch list of all sensor devices. ");
             // Fetch all sensor devices from the database that have been registered
-            var devices = await _context.SensorDevices.ToListAsync();   
+            var devices = await _context.SensorDevices.ToListAsync();
+
+            // Ensure devices is not null to avoid a null model error in Viw 
+            if (devices == null)
+                devices = new List<SensorDevices>(); // to prevent the null 
             // This action will return a view that lists all sensor devices
-            return View();
+            // important as without it the view will throw a null model error if there are no devices in the database
+            return View(devices);
         }
 
         // Details - All information for a device will be shown 
         public async Task<IActionResult> Details(int id)
         {
-            // Fetch a specific sensor device by its ID and show its details 
+            // Fetch a specific sensor device by its ID and show its details (looks up by primary key)
             var device = await _context.SensorDevices.FindAsync(id);
             if (device == null)
             {
@@ -55,6 +61,7 @@ namespace SensoreApp.Controllers
         // saves new device into the database as it is being created
         public async Task<IActionResult> Create(SensorDevices device)
         {
+            // validates each field based on annotations in the model
             if (ModelState.IsValid)
             {
                 _context.Add(device); // Add the new device to the database context
@@ -84,6 +91,7 @@ namespace SensoreApp.Controllers
         // to save edited device information into the database
         public async Task<IActionResult> Edit(int id, SensorDevices device)
         {
+            // Ensure the route ID matches the model ID to prevent tampering
             if (id != device.SensorDeviceID)
             {
                 _logger.LogError("Route {routeID} does not match model ID {modelID}", id, device.SensorDeviceID);
@@ -108,6 +116,7 @@ namespace SensoreApp.Controllers
                         return NotFound();
                     }
                     _logger.LogError(ex, "Concurrency error whilst updating the device ID - {id}", id);
+                    // rethrow the exception to view in console 
                     throw;
 
                 }
