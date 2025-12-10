@@ -1,0 +1,75 @@
+﻿@model IEnumerable<SensoreApp.Models.SensorDevices>
+
+@{
+    // Main page header titile and browser title
+    ViewData["Title"] = "Sensor Devices";
+}
+
+<!-- reminder on how to put comments-->
+<div class="container mt-4">
+    <!-- Header, page name and button  -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Registered Sensor Devices</h2>
+        <!-- Create button -->
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Add New Device
+        </a>
+    </div>
+
+    <!-- Table based of devices passed from controller -->
+    <table class="table table-striped table-bordered shadow-sm">
+        <thead class="table-dark">
+            <!-- table column names-->
+            <tr>
+                <th>ID</th>
+                <th>Serial Number</th>
+                <th>Model</th>
+                <th>Registered</th>
+                <th>Status</th>
+                <th style="width: 170px;">Actions</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            <!-- loops through all the devices-->
+            @foreach (var device in Model)
+            {
+                <tr>
+                    <td>@device.SensorDeviceID</td>
+                    <td>@device.SerialNumber</td>
+                    <td>@device.Model</td>
+                    <td>@device.RegisteredAt.ToString("dd/MM/yyyy HH:mm")</td>
+                    <td>
+                        <!--active or inactive dropdown which changes based on status(boolean)-->
+                        @if (device.IsActive)
+                        {
+                            <span class="badge bg-success">Active</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">Inactive</span>
+                        }
+                    </td>
+
+                    <td>
+                        <!-- points to controller actions  -->
+                        <a asp-action="Details" asp-route-id="@device.SensorDeviceID"
+                           class="btn btn-sm btn-info">
+                            <i class="bi bi-eye"></i>
+                        </a>
+
+                        <a asp-action="Edit" asp-route-id="@device.SensorDeviceID"
+                           class="btn btn-sm btn-warning">
+                            <i class="bi bi-pencil-square"></i>
+                        </a>
+
+                        <a asp-action="Delete" asp-route-id="@device.SensorDeviceID"
+                           class="btn btn-sm btn-danger">
+                            <i class="bi bi-trash"></i>
+                        </a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

@@ -1,0 +1,32 @@
+﻿@model SensoreApp.Models.SensorDevices
+
+@{
+    ViewData["Title"] = "Delete Device";
+}
+
+<div class="container mt-4">
+    <h2>Delete Sensor Device</h2>
+    <hr />
+
+    <div class="alert alert-danger">
+        Are you sure you want to delete this device?
+    </div>
+
+    <dl class="row">
+        <dt class="col-sm-3">Serial Number</dt>
+        <dd class="col-sm-9">@Model.SerialNumber</dd>
+
+        <dt class="col-sm-3">Model</dt>
+        <dd class="col-sm-9">@Model.Model</dd>
+    </dl>
+
+    <form asp-action="DeleteConfirmed">
+        <input type="hidden" asp-for="SensorDeviceID" />
+
+        <button type="submit" class="btn btn-danger">
+            <i class="bi bi-trash"></i> Confirm Delete
+        </button>
+
+        <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>

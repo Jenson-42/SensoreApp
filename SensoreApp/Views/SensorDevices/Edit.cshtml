@@ -1,0 +1,39 @@
+﻿@model SensoreApp.Models.SensorDevices
+
+@{
+    ViewData["Title"] = "Edit Device";
+}
+
+<div class="container mt-4">
+    <h2>Edit Sensor Device</h2>
+    <!-- horizontal line to divide page -->
+    <hr />
+
+    <form asp-action="Edit">
+        <input type="hidden" asp-for="SensorDeviceID" />
+
+        <div class="mb-3">
+            <label asp-for="SerialNumber" class="form-label"></label>
+            <input asp-for="SerialNumber" class="form-control" />
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Model" class="form-label"></label>
+            <input asp-for="Model" class="form-control" />
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="IsActive" class="form-label"></label>
+            <select asp-for="IsActive" class="form-select">
+                <option value="true" selected="@Model.IsActive">Active</option>
+                <option value="false" selected="@(!Model.IsActive)">Inactive</option>
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-warning">
+            <i class="bi bi-save"></i> Update
+        </button>
+
+        <a asp-action="Index" class="btn btn-secondary">Back</a>
+    </form>
+</div>
