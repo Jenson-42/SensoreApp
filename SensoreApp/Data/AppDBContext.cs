@@ -20,6 +20,7 @@ namespace SensoreApp.Data
         public DbSet<ThresholdSettings> ThresholdSettings { get; set; }
         public DbSet<Patient> Patients { get; set; }
         public DbSet<PatientClinician> PatientClinicians { get; set; }
+        public DbSet<SensorDevices> SensorDevices { get; set; }
 
 
         // Tables my teammates will add later (commented out for now)
