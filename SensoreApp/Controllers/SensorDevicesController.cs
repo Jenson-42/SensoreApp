@@ -21,6 +21,8 @@ namespace SensoreApp.Controllers
         // Indexing - Admin dashboard will be able to list all sensor devices 
         public async Task<IActionResult> Index()
         {
+            
+            _logger.LogInformation("Fetch list of all sensor devices. ");
             // Fetch all sensor devices from the database that have been registered
             var devices = await _context.SensorDevices.ToListAsync();   
             // This action will return a view that lists all sensor devices
@@ -44,6 +46,7 @@ namespace SensoreApp.Controllers
         // Create - Admin can register new sensor device 
         public IActionResult Create()
         {
+            _logger.LogInformation("Created Device page");
             // Return a viewfor admin to create new device
             return View();
         }
@@ -59,6 +62,7 @@ namespace SensoreApp.Controllers
                 _logger.LogInformation("New sensor device with Serial Number {SerialNumber} created.", device.SerialNumber); // Logs the creation of a new device
                 return RedirectToAction(nameof(Index)); // Redirect to the index action after successful creation
             }
+            _logger.LogWarning("Create failed validation");
             return View(device); // If model state is invalid, return to the create view with validation errors
         }
 
@@ -80,26 +84,36 @@ namespace SensoreApp.Controllers
         // to save edited device information into the database
         public async Task<IActionResult> Edit(int id, SensorDevices device)
         {
-            if (id != device.SensorDeviceID) 
+            if (id != device.SensorDeviceID)
+            {
+                _logger.LogError("Route {routeID} does not match model ID {modelID}", id, device.SensorDeviceID);
                 return NotFound();
+
+            }
 
             if (ModelState.IsValid)
             {
                 try 
                 {
+                    _logger.LogInformation("The device ID - {id} is being updated", id);
                     _context.Update(device);
                     await _context.SaveChangesAsync();
+                    _logger.LogInformation("The device ID - {id} has been updated!", id);
                 }
-                catch (DbUpdateConcurrencyException)
+                catch (DbUpdateConcurrencyException ex)
                 {
                     if (!_context.SensorDevices.Any(d => d.SensorDeviceID == id))
+                    {
+                        _logger.LogError("The device ID - {id} has not been successfully updated - it does not exist!", id);
                         return NotFound();
-
+                    }
+                    _logger.LogError(ex, "Concurrency error whilst updating the device ID - {id}", id);
                     throw;
 
                 }
                 return RedirectToAction(nameof(Index));
             }
+            _logger.LogWarning("Edit failed validation for the device ID - {id}", id);
             return View(device);
         }
 
@@ -108,11 +122,19 @@ namespace SensoreApp.Controllers
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
+            {
+                _logger.LogWarning("Delete");
                 return NotFound();
+            }
+                
             var device = await _context.SensorDevices
                 .FirstOrDefaultAsync(m => m.SensorDeviceID == id);
             if (device == null)
+            {
+                _logger.LogWarning("The device ID - {id} cannot be deleted as it does not exist!", id);
                 return NotFound();
+            }
+            _logger.LogInformation("Delete confirmation for the device ID - {id}", id);
             return View(device);
         }
 
@@ -120,14 +142,20 @@ namespace SensoreApp.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
+            _logger.LogInformation("Deleting device ID for {id}", id);
             var device = await _context.SensorDevices.FindAsync(id);
 
             if (device != null)
             {
                 _context.SensorDevices.Remove(device);
                 await _context.SaveChangesAsync();
+                _logger.LogInformation("The device ID - {id} has been deleted", id);
             }
-            return RedirectToAction(nameof(Index));
+            else
+            {
+                _logger.LogWarning("The device ID - {id} could not be deleted at this time ...", id);
+            }
+                return RedirectToAction(nameof(Index));
         }
             
 
