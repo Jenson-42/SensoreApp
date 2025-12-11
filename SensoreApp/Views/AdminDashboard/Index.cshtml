@@ -1,0 +1,205 @@
+﻿@model SensoreApp.Models.AdminDashboardViewModel
+
+@{
+    ViewData["Title"] = "Admin Dashboard";
+}
+
+<div class="container-fluid mt-4">
+
+    <!-- Header - Admin Dashboard  -->
+    <div class="row mb-4">
+        <div class="col-12 d-flex justify-content-between align-items-center">
+            <h2>Admin Dashboard</h2>
+            <span class="badge bg-secondary">Admin tools</span>
+        </div>
+    </div>
+
+    <!-- Total Users Summary  -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card shadow-sm h-100" style="background-color:#e3f2fd; border-left:4px solid #1976D2;">
+                <div class="card-body">
+                    <h6 class="text-muted mb-1">Total Users</h6>
+                    <h2 class="mb-0">@Model.TotalUsers</h2>
+                    <small class="text-muted">Patients + Clinicians + Admins</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card shadow-sm h-100" style="background-color:#e8f5e9; border-left:4px solid #388E3C;">
+                <div class="card-body">
+                    <h6 class="text-muted mb-1">Patients</h6>
+                    <h2 class="mb-0">@Model.TotalPatients</h2>
+                    <small class="text-muted">Registered Patient Accounts</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card shadow-sm h-100" style="background-color:#fff3e0; border-left:4px solid #F57C00;">
+                <div class="card-body">
+                    <h6 class="text-muted mb-1">Clinicians</h6>
+                    <h2 class="mb-0">@Model.TotalClinicians</h2>
+                    <small class="text-muted">Active Clinical Staff</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card shadow-sm h-100" style="background-color:#e0f7fa; border-left:4px solid #00ACC1;">
+                <div class="card-body">
+                    <h6 class="text-muted mb-1">Sensor Devices</h6>
+                    <h2 class="mb-0">@Model.ActiveDevices<span class="fs-6"> active</span></h2>
+                    <small class="text-muted">
+                        @Model.InactiveDevices inactive
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Buttons for User Stories  -->
+    <div class="row mb-4">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex flex-wrap gap-2">
+                        <!-- Placeholders before testing  -->
+                        <a class="btn btn-outline-primary">
+                            <i class="bi bi-people-fill me-1"></i> Manage User Accounts
+                        </a>
+                        <a asp-controller="Reports" asp-action="Index" class="btn btn-outline-secondary">
+                            <i class="bi bi-file-earmark-bar-graph me-1"></i> View Patient Data
+                        </a>
+                        <a class="btn btn-outline-success">
+                            <i class="bi bi-person-plus-fill me-1"></i> Create Account
+                        </a>
+                        <a class="btn btn-outline-warning">
+                            <i class="bi bi-shuffle me-1"></i> Assign Clinician
+                        </a>
+                        <a asp-controller="SensorDevices" asp-action="Index" class="btn btn-outline-info">
+                            <i class="bi bi-hdd-network me-1"></i> Manage Sensor Devices
+                        </a>
+                    </div>
+                    <p class="text-muted small mt-3 mb-0">
+                        These shortcuts map to admin user stories such as creating accounts,
+                        assigning clinicians, and managing sensor IDs for patients.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!--Patient and Clinician table at bottom of page/ wireframe -->
+    <div class="row g-4">
+        <!--Clinician Table -->
+        <div class="col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Clinicians</h5>
+                </div>
+                <div class="card-body p-0">
+                    @if (Model.Clinicians.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-striped mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Staff ID</th>
+                                        <th>Name</th>
+                                        <th>No. Patients</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var c in Model.Clinicians)
+                                    {
+                                        <tr>
+                                            <td>@c.ClinicianID</td>
+                                            <td>@c.Name</td>
+                                            <td>@c.NumberOfPatients</td>
+                                            <td>
+                                                @if (c.IsActive)
+                                                {
+                                                    <span class="badge bg-success">Active</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-secondary">Inactive</span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted p-3 mb-0">No clinicians found.</p>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!--Patient Table  -->
+        <div class="col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Patients</h5>
+                </div>
+                <div class="card-body p-0">
+                    @if (Model.Patients.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-striped mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Patient ID</th>
+                                        <th>Name</th>
+                                        <th>DoB</th>
+                                        <th>Clinicians</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var p in Model.Patients)
+                                    {
+                                        <tr>
+                                            <td>@p.PatientID</td>
+                                            <td>@p.Name</td>
+                                            <td>
+                                                @(p.DateOfBirth.HasValue
+                                                                                        ? p.DateOfBirth.Value.ToString("dd/MM/yyyy")
+                                                                                        : "N/A")
+                                    </td>
+                                    <td>@p.AssignedClinicians</td>
+                                    <td>
+                                        @if (p.IsActive)
+                                                {
+                                                    <span class="badge bg-success">Active</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-secondary">Inactive</span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted p-3 mb-0">No patients found.</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
