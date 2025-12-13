@@ -1,0 +1,53 @@
+﻿@model SensoreApp.Models.User
+
+<!-- Edit User Account ( This can only happen if a user account has been created)-->
+<div class="container mt-4">
+    <h2>Edit User Account</h2>
+    <hr />
+
+    <form asp-action="EditUsers" method="post">
+        <input type="hidden" asp-for="UserId" />
+
+        <div class="mb-3">
+            <label asp-for="FirstName"></label>
+            <input asp-for="FirstName" class="form-control" />
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="LastName"></label>
+            <input asp-for="LastName" class="form-control" />
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Email"></label>
+            <input asp-for="Email" class="form-control" />
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Phone"></label>
+            <input asp-for="Phone" class="form-control" />
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Role"></label>
+            <select asp-for="Role" class="form-select">
+                <option value="Patient">Patient</option>
+                <option value="Clinician">Clinician</option>
+                <option value="Admin">Admin</option>
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="IsActive"></label>
+            <select asp-for="IsActive" class="form-select">
+                <option value="true">Active</option>
+                <option value="false">Inactive</option>
+            </select>
+        </div>
+
+        <button class="btn btn-primary">Save Changes</button>
+        <a asp-action="ManageUsers" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+
+
