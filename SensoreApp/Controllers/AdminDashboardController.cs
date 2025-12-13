@@ -203,18 +203,26 @@ namespace SensoreApp.Controllers
         {
             return View();
         }
+        [HttpGet]
         public async Task<IActionResult> AssignClinician()
         {
             // Load all patients
-            var patients = await _context.Patients
-                .Select(p => new { p.UserId, Name = p.FirstName + " " + p.LastName })
-                .ToListAsync();
+            var patients = await _context.Users
+                // filter to get only active patients for assignment
+                .Where(u => u.Role == UserRole.Patient && u.IsActive)
+                // to get patient names
+                // create anonymous object with UserId and concatenated Name
+                .Select(u => new { u.UserId, Name = u.FirstName + " " + u.LastName }).ToListAsync();
 
             // Load all clinicians
-            var clinicians = await _context.Clinicians
-                .Select(c => new { c.UserId, Name = c.FirstName + " " + c.LastName })
+            var clinicians = await _context.Users
+                // filter to get only active clinicians for assignment
+                .Where(u => u.Role == UserRole.Clinician && u.IsActive)
+                // to get clinician names
+                // create anonymous object with UserId and concatenated Name
+                .Select(u => new { u.UserId, Name = u.FirstName + " " + u.LastName })
                 .ToListAsync();
-
+            // pass patients and clinicians to the view using ViewBag
             ViewBag.Patients = patients;
             ViewBag.Clinicians = clinicians;
 
@@ -224,20 +232,34 @@ namespace SensoreApp.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AssignClinician(int patientId, int clinicianId)
         {
+            // Basic validation
+            // avoid assigning if either id is 0 (bad inserts)
+            if (patientId == 0 || clinicianId == 0)
+            {
+                TempData["Error"] = "Please select both a patient and a clinician.";
+                return RedirectToAction("AssignClinician");
+            }
+
+            // Check if the assignment already exists
             var assignment = new PatientClinician
             {
                 PatientID = patientId,
                 ClinicianID = clinicianId
+
             };
 
+            // to check if assignment already exists in the database
             _context.PatientClinicians.Add(assignment);
+            // save changes to the database
             await _context.SaveChangesAsync();
 
+            // Provide feedback 
             TempData["Success"] = "Clinician assigned successfully!";
+            // redirect to admin dashboard index after assignment
             return RedirectToAction("Index");
+            
+
+
         }
-
-
-    }
-}
+    }    }    
 

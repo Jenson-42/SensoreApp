@@ -1,0 +1,38 @@
+﻿@{
+    ViewData["Title"] = "Assign Clinician to Patient";
+}
+<!-- Do assign clinician to patient form -->
+<div class="container mt-4">
+    <h2>Assign Clinician</h2>
+    <hr />
+
+    <form asp-action="AssignClinician" method="post">
+        <div class="mb-3">
+            <label class="form-label">Patient</label>
+            <select name="patientId" class="form-select" required>
+                <option value="">Select Patient</option>
+                @foreach (var p in ViewBag.Patients)
+                {
+                    <option value="@p.UserId">@p.Name</option>
+                }
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Clinician</label>
+            <select name="clinicianId" class="form-select" required>
+                <option value="">Select Clinician</option>
+                @foreach (var c in ViewBag.Clinicians)
+                {
+                    <option value="@c.UserId">@c.Name</option>
+                }
+            </select>
+        </div>
+
+        <button class="btn btn-primary">Assign</button>
+        <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+
+
+
