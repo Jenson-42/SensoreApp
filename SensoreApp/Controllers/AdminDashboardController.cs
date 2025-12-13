@@ -108,10 +108,20 @@ namespace SensoreApp.Controllers
             // Return the view with the populated view model
             return View(viewModel);
         }
-        public async Task<IActionResult> ManageUsers()
+        // using HttpGet to show the manage users page
+        public async Task<IActionResult> ManageUsers(UserRole? role)
         {
             // to get all users from database for admin dashboard
-            var users = await _context.Users.ToListAsync();
+            // initial query to get all users
+            var usersQuery = _context.Users.AsQueryable();
+
+            if (role.HasValue)
+            {
+                // filter users by role if specified
+                usersQuery = usersQuery.Where(u => u.Role == role.Value);
+            }
+            // execute the query and get the list of users
+            var users = await usersQuery.ToListAsync();
             // to pass users to the view 
             return View(users);
         }
