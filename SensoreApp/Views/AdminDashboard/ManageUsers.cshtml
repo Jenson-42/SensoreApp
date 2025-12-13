@@ -1,0 +1,56 @@
+﻿@model IEnumerable<SensoreApp.Models.User>
+
+<!--Header-->
+<div class="container mt-4">
+    <h2>Manage User Accounts</h2>
+    <hr />
+
+   
+    <!--Table Columns-->
+    <table class="table table-bordered table-striped shadow-sm">
+        <thead class="table-dark">
+            <tr>
+                <th>User ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th style="width: 150px;">Actions</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            <!--Table values formatted-->
+            @foreach (var user in Model)
+            {
+                <tr>
+                    <td>@user.UserId</td>
+                    <td>@user.FirstName @user.LastName</td>
+                    <td>@user.Email</td>
+                    <td>@user.Phone</td>
+                    <td>@user.Role</td>
+                    <td>@(user.IsActive ? "Active" : "Inactive")</td>
+                    <td>
+                        <!-- To edit user details -->
+                        <div class="d-flex gap-1">
+                            <a asp-action="EditUsers" asp-route-id="@user.UserId" class="btn btn-sm btn-warning"> Edit
+                            </a>
+                        </div>
+                    </td>
+                    <td>
+                        <!-- Gives admin the choice to deactive user if active (only when active)-->
+                        @if (user.IsActive)
+                        {
+                            <form asp-action="DeactivateUser" method="post">
+                                <input type="hidden" name="id" value="@user.UserId" />
+                                <button class="btn btn-sm btn-danger">
+                                    Deactivate
+                                </button>
+                            </form>
+                        }
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
