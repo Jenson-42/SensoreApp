@@ -4,6 +4,32 @@
 <div class="container mt-4">
     <h2>Manage User Accounts</h2>
     <hr />
+    <!-- To group account by user types -->
+    <form method="get" asp-action="ManageUsers" class="mb-3">
+        <div class="row g-2 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label">Filter by User Group</label>
+                <select name="role" class="form-select">
+                    <option value="">All Users</option>
+                    <option value="Patient" selected="@(ViewBag.SelectedRole?.ToString() == "Patient")">
+                        Patients
+                    </option>
+                    <option value="Clinician" selected="@(ViewBag.SelectedRole?.ToString() == "Clinician")">
+                        Clinicians
+                    </option>
+                    <option value="Admin" selected="@(ViewBag.SelectedRole?.ToString() == "Admin")">
+                        Admins
+                    </option>
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <button class="btn btn-primary w-100">Apply</button>
+            </div>
+        </div>
+    </form>
+
+
 
    
     <!--Table Columns-->
