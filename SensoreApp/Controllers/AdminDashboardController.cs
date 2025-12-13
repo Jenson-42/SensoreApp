@@ -5,6 +5,9 @@ using SensoreApp.Models;
 using System.Linq;
 using System.Threading.Tasks;
 
+// GET ([HttpGet] - To show
+// POST ([HttpPost]) - To submit 
+
 namespace SensoreApp.Controllers
 {
     /// Note: This would be protected by authentication and authorisation in an ideal app but due to issues faced noted in logbook (teamate exentension) ,
@@ -20,7 +23,7 @@ namespace SensoreApp.Controllers
             _logger = logger;
         }
 
-        
+
         /// Builds the AdminDashboardViewModel by collecting information from Users, Patients, Clinicians, SensorDevices and PatientClinicians.
         public async Task<IActionResult> Index()
         {
@@ -28,8 +31,10 @@ namespace SensoreApp.Controllers
 
             // get total users, patients and clinicians
             var totalUsers = await _context.Users.CountAsync();
-            var totalPatients = await _context.Patients.CountAsync();
-            var totalClinicians = await _context.Clinicians.CountAsync();
+            // updates to get total patients based on type of user created on Create New Account Page 
+            var totalPatients = await _context.Users.CountAsync(u => u.Role == UserRole.Patient);
+            // updates to get total clinicians based on type of user created on Create New Account Page
+            var totalClinicians = await _context.Users.CountAsync(u => u.Role == UserRole.Clinician);
             // get active and inactive sensor devices
             var activeDevices = await _context.SensorDevices.CountAsync(d => d.IsActive);
             var inactiveDevices = await _context.SensorDevices.CountAsync(d => !d.IsActive);
@@ -98,11 +103,131 @@ namespace SensoreApp.Controllers
             };
 
             _logger.LogInformation(
-                "The Admin dashboard loaded: Users - {Users} ,Patients - {Patients} ,Clinicians -  {Clinicians} ,Active Devices -  {ActiveDevices}.",totalUsers, totalPatients, totalClinicians, activeDevices);
+                "The Admin dashboard loaded: Users - {Users} ,Patients - {Patients} ,Clinicians -  {Clinicians} ,Active Devices -  {ActiveDevices}.", totalUsers, totalPatients, totalClinicians, activeDevices);
 
             // Return the view with the populated view model
             return View(viewModel);
         }
+        public async Task<IActionResult> ManageUsers()
+        {
+            // to get all users from database for admin dashboard
+            var users = await _context.Users.ToListAsync();
+            // to pass users to the view 
+            return View(users);
+        }
+
+        // To create user page 
+        // shows the user form 
+        [HttpGet]
+        public IActionResult CreateUser()
+        {
+            return View(new User());
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        //submits the user form 
+        public async Task<IActionResult> CreateUser(User user)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(user);
+            }
+            // set new user to active by default
+            user.IsActive = true;
+
+            // will save new user to the database
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+            // to redirect to admin dashboard index after creating user
+            return RedirectToAction("Index");
+
+        }
+        // to save the users 
+        public async Task<IActionResult> SaveUsers()
+        {
+            var users = await _context.Users.ToListAsync();
+            return View(users);
+        }
+        [HttpPost]
+        public async Task<IActionResult> DeactivateUser(int id)
+        {
+            var user = await _context.Users.FindAsync(id);
+            if (user == null)
+            {
+                return NotFound();
+            }
+            // Deactivate the user by setting IsActive to false
+            user.IsActive = false;
+            await _context.SaveChangesAsync();
+            // Redirect back to the Manage Users view
+            return RedirectToAction("ManageUsers");
+        }
+
+        // to show edit user form
+        [HttpGet]
+        public async Task<IActionResult> EditUsers(int id)
+        {
+            var user = await _context.Users.FindAsync(id);
+            if (user == null)
+            {
+                return NotFound();
+            }
+            return View(user);
+        }
+
+        // to submit edited user form
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditUsers(User user)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(user);
+            }
+            _context.Users.Update(user);
+            await _context.SaveChangesAsync();
+            return RedirectToAction("ManageUsers");
+        }
+        public IActionResult AuditLogs()
+        {
+            return View();
+        }
+        public async Task<IActionResult> AssignClinician()
+        {
+            // Load all patients
+            var patients = await _context.Patients
+                .Select(p => new { p.UserId, Name = p.FirstName + " " + p.LastName })
+                .ToListAsync();
+
+            // Load all clinicians
+            var clinicians = await _context.Clinicians
+                .Select(c => new { c.UserId, Name = c.FirstName + " " + c.LastName })
+                .ToListAsync();
+
+            ViewBag.Patients = patients;
+            ViewBag.Clinicians = clinicians;
+
+            return View();
+        }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AssignClinician(int patientId, int clinicianId)
+        {
+            var assignment = new PatientClinician
+            {
+                PatientID = patientId,
+                ClinicianID = clinicianId
+            };
+
+            _context.PatientClinicians.Add(assignment);
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = "Clinician assigned successfully!";
+            return RedirectToAction("Index");
+        }
+
+
     }
 }
 

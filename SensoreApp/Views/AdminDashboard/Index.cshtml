@@ -64,26 +64,29 @@
         <div class="col-lg-8">
             <div class="card shadow-sm">
                 <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0">Quick Actions</h5>
+                    <h5 class="mb-0">Admin Tools </h5>
                 </div>
                 <div class="card-body">
                     <div class="d-flex flex-wrap gap-2">
                         <!-- Placeholders before testing  -->
-                        <a class="btn btn-outline-primary">
+                        <a asp-controller="AdminDashboard" asp-action="ManageUsers" class="btn btn-outline-primary">
                             <i class="bi bi-people-fill me-1"></i> Manage User Accounts
                         </a>
                         <a asp-controller="Reports" asp-action="Index" class="btn btn-outline-secondary">
                             <i class="bi bi-file-earmark-bar-graph me-1"></i> View Patient Data
                         </a>
-                        <a class="btn btn-outline-success">
+                        <a asp-controller="AdminDashboard" asp-action="CreateUser"class="btn btn-outline-success">
                             <i class="bi bi-person-plus-fill me-1"></i> Create Account
                         </a>
-                        <a class="btn btn-outline-warning">
-                            <i class="bi bi-shuffle me-1"></i> Assign Clinician
+                        <a asp-controller="AdminDashboard" asp-action="AssignClinician"
+                           class="btn btn-outline-primary">
+                            Assign Clinician
                         </a>
+
                         <a asp-controller="SensorDevices" asp-action="Index" class="btn btn-outline-info">
                             <i class="bi bi-hdd-network me-1"></i> Manage Sensor Devices
                         </a>
+                        <a asp-action="AuditLogs" class="btn btn-outline-secondary"> View Audits</a>
                     </div>
                     <p class="text-muted small mt-3 mb-0">
                         These shortcuts map to admin user stories such as creating accounts,
