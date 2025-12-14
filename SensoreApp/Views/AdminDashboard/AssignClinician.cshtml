@@ -1,6 +1,20 @@
 ﻿@{
     ViewData["Title"] = "Assign Clinician to Patient";
 }
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">
+        @TempData["Error"]
+    </div>
+}
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["Success"]
+    </div>
+}
+)
 <!-- Do assign clinician to patient form -->
 <div class="container mt-4">
     <h2>Assign Clinician</h2>

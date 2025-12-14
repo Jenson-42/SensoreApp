@@ -33,11 +33,10 @@ namespace SensoreApp.Controllers
             var totalUsers = await _context.Users.CountAsync();
             // updates to get total patients based on type of user created on Create New Account Page 
             var totalPatients = await _context.Users.CountAsync(u => u.Role == UserRole.Patient);
+            var activeDevices = await _context.SensorDevices.CountAsync(sd => sd.IsActive);
+            var inactiveDevices = await _context.SensorDevices.CountAsync(sd => !sd.IsActive);
             // updates to get total clinicians based on type of user created on Create New Account Page
             var totalClinicians = await _context.Users.CountAsync(u => u.Role == UserRole.Clinician);
-            // get active and inactive sensor devices
-            var activeDevices = await _context.SensorDevices.CountAsync(d => d.IsActive);
-            var inactiveDevices = await _context.SensorDevices.CountAsync(d => !d.IsActive);
 
             // to create clinician table
             var clinicianPatientCounts = await _context.PatientClinicians
@@ -96,14 +95,12 @@ namespace SensoreApp.Controllers
                 TotalUsers = totalUsers,
                 TotalPatients = totalPatients,
                 TotalClinicians = totalClinicians,
-                ActiveDevices = activeDevices,
-                InactiveDevices = inactiveDevices,
                 Clinicians = clinicianSummaries,
                 Patients = patientSummaries
             };
 
             _logger.LogInformation(
-                "The Admin dashboard loaded: Users - {Users} ,Patients - {Patients} ,Clinicians -  {Clinicians} ,Active Devices -  {ActiveDevices}.", totalUsers, totalPatients, totalClinicians, activeDevices);
+                "The Admin dashboard loaded: Users - {Users} ,Patients - {Patients} ,Clinicians -  {Clinicians}.", totalUsers, totalPatients, totalClinicians);
 
             // Return the view with the populated view model
             return View(viewModel);
@@ -239,9 +236,18 @@ namespace SensoreApp.Controllers
                 TempData["Error"] = "Please select both a patient and a clinician.";
                 return RedirectToAction("AssignClinician");
             }
+            // Check if the patient and clinician exist
+            bool alreadyassigned = await _context.PatientClinicians
+                .AnyAsync(pc => pc.PatientID == patientId && pc.ClinicianID == clinicianId);
+            // if already assigned, shows error message
+            if (alreadyassigned)
+            {
+                TempData["Error"] = "This clinician is already assigned to the selected patient.";
+                return RedirectToAction("AssignClinician");
+            }
 
-            // Check if the assignment already exists
-            var assignment = new PatientClinician
+                // Check if the assignment already exists
+                var assignment = new PatientClinician
             {
                 PatientID = patientId,
                 ClinicianID = clinicianId
@@ -257,9 +263,44 @@ namespace SensoreApp.Controllers
             TempData["Success"] = "Clinician assigned successfully!";
             // redirect to admin dashboard index after assignment
             return RedirectToAction("Index");
-            
 
 
         }
-    }    }    
 
+        [HttpGet]
+        public async Task<IActionResult> AssignSensor()
+        {
+            var patients = await _context.Users
+                .Where(u => u.Role == UserRole.Patient && u.IsActive)
+                .ToListAsync();
+
+            var sensors = await _context.SensorDevices
+                .Where(s => s.IsActive)
+                .ToListAsync();
+
+            ViewBag.Patients = patients;
+            ViewBag.Sensors = sensors;
+            return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AssignSensor(int patientId, int sensorDeviceId)
+        {
+            var patient = await _context.Users.FindAsync(patientId);
+            var sensor = await _context.SensorDevices.FindAsync(sensorDeviceId);
+
+            if (patient == null || sensor == null)
+            {
+                TempData["Error"] = "Invalid patient or sensor device selection.";
+                return RedirectToAction("AssignSensor");
+            }
+            patient.SensorDeviceID = sensorDeviceId;
+            await _context.SaveChangesAsync();
+            _logger.LogInformation("Sensor device with ID {SensorId} assigned to patient with ID {PatientId}.", sensorDeviceId, patientId);
+            TempData["Success"] = "Sensor device assigned successfully!";
+            return RedirectToAction("Index");
+
+        }
+    }
+}    
