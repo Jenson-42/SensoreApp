@@ -1,0 +1,56 @@
+﻿<!-- Now removing previous placeholders-->
+
+@model SensoreApp.Models.AdminDashbAuditViewModel 
+
+@{
+        ViewData["Title"] = "Audit Logs";
+}
+
+<div class="container mt-4">
+    <h2> Audit Logs</h2>
+    <hr />
+    <!-- For recent alerts-->
+    <h4> Recent Alerts</h4>
+    <table class="table table-sm table-striped">
+        <thead> 
+            <tr> 
+                <th>AlertID</th>
+                <th>UserID</th>
+                <th>Time</th>
+                <th>Status</th>
+                <th>Trigger Value</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var alert in Model.RecentAlerts)
+            {
+                <tr>
+                    <td>@alert.AlertID</td>
+                    <td>@alert.UserID</td>
+                    <td>@alert.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                    <td>@alert.Status</td>
+                    <td>@alert.TriggerValue</td>
+                </tr>
+            }
+    </table>
+
+    <!--For recent CSV uploads-->
+    <h4 class="mt-5"> Recent CSV Uploads</h4>
+    <table class="table table-sm table-bordered">
+        <thead>
+            <tr> 
+                <th>Uploaded At</th>
+                <th>FrameID</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var upload in Model.RecentUploads)
+            {
+                <tr>
+                    <td>@upload.UploadedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                    <td>@upload.FrameID</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
