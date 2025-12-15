@@ -20,5 +20,10 @@ namespace SensoreApp.Models
         // this property has been added to allow for role based admin management without the use of authentication (teamate contrainsts mentioned in logbook)
         // For Patiernt, Clinician, Admin user roles
         public UserRole Role { get; set; }
+
+        //for sensor devices assigned to users
+        // nullable to allow for users without sensor devices
+        public int? SensorDeviceID { get; set; }
+        
     }
 }
