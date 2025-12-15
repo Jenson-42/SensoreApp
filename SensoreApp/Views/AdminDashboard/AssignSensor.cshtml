@@ -1,0 +1,45 @@
+﻿@{
+    ViewData["Title"] = "Assign Sensor to Patient";
+}
+
+<div class="container mt-4">
+    <h2>Assign Sensor Device</h2>
+    <hr />
+
+    <form asp-action="AssignSensor" method="post">
+
+        <div class="mb-3">
+            <label class="form-label">Patient</label>
+            <select name="patientId" class="form-select" required>
+                <option value="">-- Select Patient --</option>
+                @foreach (var p in ViewBag.Patients)
+                {
+                    <option value="@p.UserId">
+                        @p.FirstName @p.LastName
+                    </option>
+                }
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Sensor Device</label>
+            <select name="sensorDeviceId" class="form-select" required>
+                <option value="">-- Select Sensor --</option>
+                @foreach (var s in ViewBag.Sensors)
+                {
+                    <option value="@s.SensorDeviceID">
+                        @s.SerialNumber <!--(@s.Model)-->
+                    </option>
+                }
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary">
+            Assign Sensor
+        </button>
+
+        <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+
+
