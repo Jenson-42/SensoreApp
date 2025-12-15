@@ -6,6 +6,7 @@
         // Lists to hold recent uploads and alerts
         public List<AuditUploadViewModel> RecentUploads { get; set; } = new();
         public List<AuditAlertViewModel> RecentAlerts { get; set; } = new();
+        public List<AdminAuditUserActionViewModel> RecentUserActions { get; set; } = new();
     }
 
     public class AuditUploadViewModel
@@ -22,5 +23,11 @@
        public int UserID { get; set; }
        public string Status { get; set; } = string.Empty;
        public float? TriggerValue { get; set; }
+    }
+    public class AdminAuditUserActionViewModel
+    {
+        public string ActionType { get; set; } = string.Empty;
+        public DateTime CreatedAt { get; set; }
+        public string Description { get; set; } = string.Empty;
     }
 }
