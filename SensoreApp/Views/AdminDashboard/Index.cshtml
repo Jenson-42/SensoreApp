@@ -49,7 +49,7 @@
         <div class="col-md-3">
             <div class="card shadow-sm h-100" style="background-color:#e0f7fa; border-left:4px solid #00ACC1;">
                 <div class="card-body">
-                    <h6 class="text-muted mb-1">Sensor Devices</h6>
+                    <!--<h6 class="text-muted mb-1">Sensor Devices</h6>-->
                     <h2 class="mb-0">@Model.ActiveDevices<span class="fs-6"> active</span></h2>
                     <small class="text-muted">
                         @Model.InactiveDevices inactive
@@ -83,7 +83,7 @@
                             Assign Clinician
                         </a>
 
-                        <a asp-controller="SensorDevices" asp-action="Index" class="btn btn-outline-info">
+                        <a asp-controller="AdminDashboard" asp-action="Index" class="btn btn-outline-info">
                             <i class="bi bi-hdd-network me-1"></i> Manage Sensor Devices
                         </a>
                         <a asp-action="AuditLogs" class="btn btn-outline-secondary"> View Audits</a>
