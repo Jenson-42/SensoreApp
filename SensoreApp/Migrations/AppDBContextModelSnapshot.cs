@@ -311,6 +311,9 @@ namespace SensoreApp.Migrations
                     b.Property<int>("Role")
                         .HasColumnType("int");
 
+                    b.Property<int?>("SensorDeviceID")
+                        .HasColumnType("int");
+
                     b.HasKey("UserId");
 
                     b.ToTable("Users");
