@@ -228,10 +228,24 @@ namespace SensoreApp.Controllers
                 })
                 .ToListAsync();
 
+            // make a note of recent user actions from audit log
+            var recentUserActions = await _context.AuditLog
+                .OrderByDescending(a => a.CreatedAt)
+                .Take(25)
+                .Select(a => new AdminAuditUserActionViewModel
+                {
+                    // map fields to view model
+                    ActionType = a.Action,
+                    Description = a.Description,
+                    CreatedAt = a.CreatedAt
+                })
+                .ToListAsync();
+
             var viewModel = new AdminDashbAuditViewModel
             {
                RecentAlerts = recentAlerts,
-               RecentUploads = recentUploads
+               RecentUploads = recentUploads,
+               RecentUserActions = recentUserActions
             };
 
             return View(viewModel);
@@ -298,6 +312,16 @@ namespace SensoreApp.Controllers
 
             // Provide feedback 
             TempData["Success"] = "Clinician assigned successfully!";
+
+            // Logs the assignment action
+            _context.AuditLog.Add(new AuditLog
+            {
+                Description = $"Clinician with ID {clinicianId} assigned to patient with ID {patientId}.",
+                Action = "AssignClinician",
+                PerformedByUserID = 0, // In a real app, this would be the admin's user ID
+                CreatedAt = DateTime.UtcNow
+            });
+            await _context.SaveChangesAsync();
             // redirect to admin dashboard index after assignment
             return RedirectToAction("Index");
 
