@@ -1,0 +1,28 @@
+﻿<!--To verify if users have been saved-->
+@model IEnumerable<SensoreApp.Models.User>
+
+<h2>All Users </h2>
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>UserID</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Phone</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        @foreach (var u in Model)
+        {
+            <tr>
+                <td>@u.UserId</td>
+                <td>@u.FirstName @u.LastName</td>
+                <td>@u.Email</td>
+                <td>@u.Phone</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
