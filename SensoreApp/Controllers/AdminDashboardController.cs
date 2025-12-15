@@ -201,10 +201,11 @@ namespace SensoreApp.Controllers
         {
             // make a note of recent alerts 
             var recentAlerts = await _context.Alerts
-                // 
+                // order by created at descending to get most recent first
                 .OrderByDescending(a => a.CreatedAt)
-                // 
-                .Take(100)
+                // limits to the most recent 25 alerts 
+                .Take(25)
+                // maps back to AdminDashAuditViewModel
                 .Select(a => new AuditAlertViewModel
                 {
                     AlertID = a.AlertId,
@@ -213,12 +214,13 @@ namespace SensoreApp.Controllers
                     Status = a.Status,
                     TriggerValue = a.TriggerValue
                 })
+                // execute the query and get the list
                 .ToListAsync();
 
             // make a note of recent uploads using the frame metrics 
             var recentUploads = await _context.FrameMetrics
                 .OrderByDescending(f => f.ComputedAt)
-                .Take(100)
+                .Take(25)
                 .Select(f => new AuditUploadViewModel
                 {
                     FrameID = f.FrameID,
@@ -226,7 +228,7 @@ namespace SensoreApp.Controllers
                 })
                 .ToListAsync();
 
-            var viewModel = new AdminDashAuditViewModel
+            var viewModel = new AdminDashbAuditViewModel
             {
                RecentAlerts = recentAlerts,
                RecentUploads = recentUploads
