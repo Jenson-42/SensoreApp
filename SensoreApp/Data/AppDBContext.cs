@@ -21,6 +21,7 @@ namespace SensoreApp.Data
         public DbSet<Patient> Patients { get; set; }
         public DbSet<PatientClinician> PatientClinicians { get; set; }
         public DbSet<SensorDevices> SensorDevices { get; set; }
+        public DbSet<AuditLog> AuditLog { get; set; }
 
 
         // Tables my teammates will add later (commented out for now)
