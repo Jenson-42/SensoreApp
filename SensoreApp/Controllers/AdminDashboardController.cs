@@ -196,10 +196,45 @@ namespace SensoreApp.Controllers
             await _context.SaveChangesAsync();
             return RedirectToAction("ManageUsers");
         }
-        public IActionResult AuditLogs()
+        [HttpGet]
+        public async Task<IActionResult> AuditLogs()
         {
-            return View();
+            // make a note of recent alerts 
+            var recentAlerts = await _context.Alerts
+                // 
+                .OrderByDescending(a => a.CreatedAt)
+                // 
+                .Take(100)
+                .Select(a => new AuditAlertViewModel
+                {
+                    AlertID = a.AlertId,
+                    CreatedAt = a.CreatedAt,
+                    UserID = a.UserId,
+                    Status = a.Status,
+                    TriggerValue = a.TriggerValue
+                })
+                .ToListAsync();
+
+            // make a note of recent uploads using the frame metrics 
+            var recentUploads = await _context.FrameMetrics
+                .OrderByDescending(f => f.ComputedAt)
+                .Take(100)
+                .Select(f => new AuditUploadViewModel
+                {
+                    FrameID = f.FrameID,
+                    UploadedAt = f.ComputedAt
+                })
+                .ToListAsync();
+
+            var viewModel = new AdminDashAuditViewModel
+            {
+               RecentAlerts = recentAlerts,
+               RecentUploads = recentUploads
+            };
+
+            return View(viewModel);
         }
+        
         [HttpGet]
         public async Task<IActionResult> AssignClinician()
         {
