@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System;
+using Microsoft.AspNetCore.Mvc.Rendering; // For SelectListItem
 
 namespace SensoreApp.Controllers
 {
@@ -113,6 +114,21 @@ namespace SensoreApp.Controllers
                     });
                 }
             }
+            bool isAdmin = currentUser.Role == UserRole.Admin;
+
+            if (isAdmin)
+            {
+                ViewBag.PatientList = await _context.Patients
+                    .Where(p => p.IsActive)
+                    .OrderBy(p => p.LastName)
+                    .Select(p => new SelectListItem
+                    {
+                        Value = p.UserId.ToString(),
+                        Text = $"{p.FirstName} {p.LastName}"
+                    })
+                    .ToListAsync();
+            }
+            ViewBag.IsAdmin = isAdmin;
 
             ViewBag.AvailableFrames = sampledFrames;
             ViewBag.TotalFramesInRange = allFrames.Count;
