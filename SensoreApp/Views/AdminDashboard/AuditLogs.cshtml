@@ -61,4 +61,24 @@ to another teammates condition which has been noted in report and logbook !-->
             }
         </tbody>
     </table>
+
+    <h5 class="mt-4"> Recent User Actions (Admin)</h5>
+    <table class="table table-sm table-striped">
+        <thead>
+            <tr>
+                <th>Action </th>
+                <th>Description</th>
+                <th>Timestamp</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var action in Model.RecentUserActions)
+            {
+                <tr>
+                    <td>@action.ActionType</td>
+                    <td>@action.Description</td>
+                    <td>@action.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                </tr>
+            }
+    </table>
 </div>
